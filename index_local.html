@@ -507,17 +507,14 @@ function api(endpoint, body, timeoutMs = 15000) {
             <span id="rakumart-indicator-label" style="color:var(--text-light);">確認中...</span>
           </div>
           <span id="rakumart-status" style="font-size:13px; color:var(--text-light);"></span>
-          <button class="btn btn-sm btn-outline" onclick="showPastDeliveryList()" style="font-size:11px; padding:4px 8px; color:var(--text-light); border-color:var(--border);">
-            📋 過去から選択
-          </button>
         </div>
-        <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <input type="text" id="specific-order-sn-input" placeholder="配送依頼書番号を直接入力..."
-            style="flex:1; max-width:280px; padding:5px 10px; font-size:13px; border:1px solid #ffaaaa; border-radius:4px; outline:none; background:#fff;"
+        <div style="margin-top:10px; display:flex; gap:6px; align-items:center;">
+          <input type="text" id="specific-order-sn-input" placeholder="配送依頼書番号"
+            style="width:180px; padding:4px 8px; font-size:12px; border:1px solid #ddd; border-radius:4px; outline:none; background:#fff; color:var(--text-light);"
             onkeydown="if(event.key==='Enter') fetchBySpecificOrderSn()">
-          <button class="btn btn-sm" onclick="fetchBySpecificOrderSn()"
-            style="font-size:12px; padding:5px 12px; background:#e53935; color:white; border:none; border-radius:4px; cursor:pointer; white-space:nowrap;">
-            🔍 番号で取得
+          <button onclick="fetchBySpecificOrderSn()"
+            style="padding:4px 10px; font-size:12px; background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:4px; cursor:pointer; white-space:nowrap;">
+            取得
           </button>
         </div>
         <div style="margin-top:10px; font-size:12px; color:var(--text-light);">
