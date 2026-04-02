@@ -1392,6 +1392,9 @@ def api_import_from_gas():
 # 起動
 # =============================================
 if __name__ == '__main__':
+    import webbrowser
+    import threading
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     # 初期データファイルが無ければ空で作成
@@ -1404,4 +1407,11 @@ if __name__ == '__main__':
     print('🔄 ラクマートサーバーを起動しています...')
     start_rakumart_server()
     print('=' * 50)
-    app.run(debug=False, port=8080, host='127.0.0.1', use_reloader=True)
+
+    # サーバー起動後にブラウザを自動で開く
+    def open_browser():
+        time.sleep(1.5)
+        webbrowser.open('http://localhost:8080')
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    app.run(debug=False, port=8080, host='127.0.0.1', use_reloader=False)

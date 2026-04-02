@@ -494,9 +494,6 @@ function api(endpoint, body, timeoutMs = 15000) {
       <!-- ラクマート自動取得 -->
       <div style="background:linear-gradient(135deg,#fff5f5,#ffe8e8); border:1px solid #ffcccc; border-radius:10px; padding:16px; margin-bottom:16px;">
         <div style="font-weight:600; font-size:15px; margin-bottom:6px;">🛒 ラクマートから自動取得</div>
-        <div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">
-          <code style="background:#fff;padding:2px 6px;border-radius:4px;font-size:12px;">rakumart_server.py</code> を起動中なら、ボタン1つで最新の配送依頼書を自動取得します。
-        </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="fetchRakumartLatest()" id="rakumart-fetch-btn"
             style="background:#e53935; border-color:#e53935;">
@@ -516,10 +513,6 @@ function api(endpoint, body, timeoutMs = 15000) {
             style="padding:4px 10px; font-size:12px; background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:4px; cursor:pointer; white-space:nowrap;">
             取得
           </button>
-        </div>
-        <div style="margin-top:10px; font-size:12px; color:var(--text-light);">
-          ※ サーバー未起動の場合: ターミナルで
-          <code style="background:#fff;padding:2px 6px;border-radius:4px;">python3 rakumart_server.py</code> を実行してください
         </div>
       </div>
 
