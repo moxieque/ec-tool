@@ -10,6 +10,74 @@ xattr -rd com.apple.quarantine "$APP_PATH" 2>/dev/null || true
 # 実行権限を付与
 chmod -R 755 "$APP_PATH" 2>/dev/null || true
 
+# 起動スクリプトを /Applications に配置
+cat > "/Applications/Zaikore 起動.command" << 'LAUNCH_EOF'
+#!/bin/bash
+# Zaikore 起動スクリプト
+# ダブルクリックで起動 → サーバー起動 → ブラウザ自動オープン
+
+PROJECT_DIR="/Users/inamikatsutoshi/Documents/Claude/moxieque-ec-tool"
+PORT=8080
+MAX_WAIT=30
+
+echo ""
+echo "========================================="
+echo "✨ Zaikore を起動中..."
+echo "========================================="
+echo ""
+
+# 既に起動中のプロセスを停止
+pkill -f "app.py" 2>/dev/null
+
+# サーバー起動
+cd "$PROJECT_DIR"
+python3 app.py > /tmp/zaikore.log 2>&1 &
+SERVER_PID=$!
+
+echo "⏳ サーバー起動待機中..."
+sleep 2
+
+# サーバーが起動するのを待つ（最大30秒）
+COUNTER=0
+while ! curl -s "http://localhost:$PORT" > /dev/null 2>&1; do
+    if [ $COUNTER -ge $MAX_WAIT ]; then
+        echo ""
+        echo "❌ サーバーの起動がタイムアウトしました"
+        echo ""
+        echo "ログを確認:"
+        echo "  tail -20 /tmp/zaikore.log"
+        read -p "Enter キーで閉じます..."
+        exit 1
+    fi
+    sleep 1
+    COUNTER=$((COUNTER + 1))
+done
+
+echo "✅ サーバーが起動しました"
+echo ""
+echo "📱 ブラウザを起動中..."
+
+# ブラウザを自動起動
+open "http://localhost:$PORT" || \
+open -a "Google Chrome" "http://localhost:$PORT" || \
+open -a "Safari" "http://localhost:$PORT"
+
+sleep 1
+
+echo ""
+echo "========================================="
+echo "✅ Zaikore が起動しました！"
+echo "========================================="
+echo ""
+echo "📍 ブラウザで http://localhost:$PORT"
+echo "   にアクセスしています"
+echo ""
+echo "このウィンドウは閉じても大丈夫です"
+echo ""
+LAUNCH_EOF
+
+chmod 755 "/Applications/Zaikore 起動.command"
+
 # アンインストーラーを /Applications に配置
 cat > "/Applications/Zaikore アンインストール.command" << 'UNINSTALL_EOF'
 #!/bin/bash
