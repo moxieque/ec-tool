@@ -21,6 +21,68 @@
     --shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
 
+  /* ===== テーマ定義 ===== */
+
+  /* ダークモード */
+  html[data-theme="dark"] {
+    --primary: #5a9fd4;
+    --success: #4db8a3;
+    --warning: #ffc766;
+    --danger: #ff6b6b;
+    --dark: #0d1117;
+    --card-bg: #161b22;
+    --bg: #0d1117;
+    --text: #e8eef2;
+    --text-light: #8b949e;
+    --border: #30363d;
+    --shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  /* パステル系 */
+  html[data-theme="pastel"] {
+    --primary: #a8d5ff;
+    --success: #a3e9dc;
+    --warning: #ffe8b3;
+    --danger: #ffb3b3;
+    --dark: #6b5b95;
+    --card-bg: #fff9f5;
+    --bg: #fef4f0;
+    --text: #5a4a6a;
+    --text-light: #9b8ab0;
+    --border: #e6d5e8;
+    --shadow: 0 2px 12px rgba(107, 91, 149, 0.12);
+  }
+
+  /* シアン系 */
+  html[data-theme="cyan"] {
+    --primary: #00bcd4;
+    --success: #1de9b6;
+    --warning: #ffb300;
+    --danger: #ff6b9d;
+    --dark: #00546d;
+    --card-bg: #e0f7fa;
+    --bg: #cff4fc;
+    --text: #00546d;
+    --text-light: #00838f;
+    --border: #80deea;
+    --shadow: 0 2px 12px rgba(0, 188, 212, 0.15);
+  }
+
+  /* モノクロ系 */
+  html[data-theme="monochrome"] {
+    --primary: #505050;
+    --success: #707070;
+    --warning: #909090;
+    --danger: #404040;
+    --dark: #1a1a1a;
+    --card-bg: #f5f5f5;
+    --bg: #efefef;
+    --text: #2a2a2a;
+    --text-light: #808080;
+    --border: #d0d0d0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+
   body {
     font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
     background: var(--bg);
@@ -1004,6 +1066,39 @@ function api(endpoint, body, timeoutMs = 15000) {
         </div>
 
         <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:20px; width:100%;">💾 設定を保存</button>
+      </div>
+
+      <!-- テーマ設定 -->
+      <div class="card">
+        <div class="card-title">🎨 テーマカラー</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px;">
+          <label style="display:flex; align-items:center; padding:12px; border:2px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.2s;"
+            onchange="applyTheme('default')" id="theme-default-label">
+            <input type="radio" name="theme" value="default" style="margin-right:8px; cursor:pointer;">
+            <span style="font-size:12px;">📘 デフォルト</span>
+          </label>
+          <label style="display:flex; align-items:center; padding:12px; border:2px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.2s;"
+            onchange="applyTheme('dark')" id="theme-dark-label">
+            <input type="radio" name="theme" value="dark" style="margin-right:8px; cursor:pointer;">
+            <span style="font-size:12px;">🌙 ダーク</span>
+          </label>
+          <label style="display:flex; align-items:center; padding:12px; border:2px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.2s;"
+            onchange="applyTheme('pastel')" id="theme-pastel-label">
+            <input type="radio" name="theme" value="pastel" style="margin-right:8px; cursor:pointer;">
+            <span style="font-size:12px;">🌸 パステル</span>
+          </label>
+          <label style="display:flex; align-items:center; padding:12px; border:2px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.2s;"
+            onchange="applyTheme('cyan')" id="theme-cyan-label">
+            <input type="radio" name="theme" value="cyan" style="margin-right:8px; cursor:pointer;">
+            <span style="font-size:12px;">💎 シアン</span>
+          </label>
+          <label style="display:flex; align-items:center; padding:12px; border:2px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.2s;"
+            onchange="applyTheme('monochrome')" id="theme-monochrome-label">
+            <input type="radio" name="theme" value="monochrome" style="margin-right:8px; cursor:pointer;">
+            <span style="font-size:12px;">⬛ モノクロ</span>
+          </label>
+        </div>
+        <small style="color:var(--text-light); display:block; margin-top:12px;">好みのカラースキームを選択してください（自動保存）</small>
       </div>
 
       <!-- 情報・ヘルプ -->
@@ -3870,6 +3965,9 @@ function saveStockChange(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // テーマを復元
+  loadSavedTheme();
+
   const modal = document.getElementById('image-modal');
   if (modal) {
     modal.addEventListener('click', (e) => {
@@ -3877,6 +3975,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// =============================================
+// テーマ機能
+// =============================================
+function applyTheme(themeName) {
+  document.documentElement.setAttribute('data-theme', themeName);
+  localStorage.setItem('ec-tool-theme', themeName);
+
+  // ラジオボタンを更新
+  document.querySelectorAll('input[name="theme"]').forEach(radio => {
+    radio.checked = radio.value === themeName;
+  });
+
+  showToast(`✅ テーマを「${getThemeLabel(themeName)}」に変更しました`);
+}
+
+function getThemeLabel(themeName) {
+  const labels = {
+    'default': 'デフォルト',
+    'dark': 'ダーク',
+    'pastel': 'パステル',
+    'cyan': 'シアン',
+    'monochrome': 'モノクロ'
+  };
+  return labels[themeName] || themeName;
+}
+
+function loadSavedTheme() {
+  const savedTheme = localStorage.getItem('ec-tool-theme') || 'default';
+  applyTheme(savedTheme);
+}
 
 // =============================================
 // 設定タブ機能
@@ -3887,6 +4016,12 @@ async function loadSettings() {
     document.getElementById('settings-low-stock-threshold').value = config.lowStockThreshold || 5;
     document.getElementById('settings-default-fee-rate').value = config.defaultFeeRate || '0';
     document.getElementById('settings-default-calculation').value = config.defaultCalculation || 'standard';
+
+    // テーマ選択を反映
+    const savedTheme = localStorage.getItem('ec-tool-theme') || 'default';
+    document.querySelectorAll('input[name="theme"]').forEach(radio => {
+      radio.checked = radio.value === savedTheme;
+    });
 
     // ラクマート認証情報を読み込む
     if (config.rakumartUsername) {
