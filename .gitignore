@@ -47,6 +47,13 @@ data/sales.json
 data/inventory_history.json
 data/config.json
 
+# Product images (user-generated, don't include in build)
+static/images/*.jpg
+static/images/*.jpeg
+static/images/*.png
+static/images/*.gif
+static/images/*.webp
+
 # Build artifacts
 dist/
 build/
