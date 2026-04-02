@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local data (keep original, don't sync)
+data/products.json
+data/purchases.json
+data/sales.json
+data/inventory_history.json
+data/config.json
+
+# Build artifacts
+dist/
+build/
+*.exe
+*.dmg
+
+# Temporary
+*.log
+startup.log
+.rakumart_profile/
+backups/

@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC販売管理ツール 取扱説明書 — Moxieque</title>
+<style>
+/* ===== 基本リセット ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ===== 変数 ===== */
+:root {
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --danger: #dc2626;
+  --danger-light: #fef2f2;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --sidebar-w: 260px;
+  --font: 'Hiragino Sans', 'Meiryo', 'Yu Gothic', sans-serif;
+}
+
+/* ===== 画面表示レイアウト ===== */
+body {
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--gray-900);
+  background: var(--gray-50);
+}
+
+/* サイドバー */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  overflow-y: auto;
+  padding: 24px 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: 12px;
+}
+.sidebar-logo h1 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.3;
+}
+.sidebar-logo p {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.sidebar-section-title {
+  padding: 8px 20px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-500);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 7px 20px;
+  font-size: 13px;
+  color: var(--gray-700);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+.sidebar nav a:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+/* メインコンテンツ */
+.main {
+  margin-left: var(--sidebar-w);
+  padding: 48px 56px;
+  max-width: calc(var(--sidebar-w) + 820px);
+}
+
+/* ===== 見出し ===== */
+.page-header {
+  padding-bottom: 32px;
+  border-bottom: 2px solid var(--gray-200);
+  margin-bottom: 40px;
+}
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gray-900);
+  letter-spacing: -0.02em;
+}
+.page-header p {
+  margin-top: 8px;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+section {
+  margin-bottom: 56px;
+}
+
+h2 {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--gray-900);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 24px;
+  scroll-margin-top: 24px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin: 24px 0 12px;
+}
+
+h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin: 16px 0 8px;
+}
+
+p { margin-bottom: 12px; }
+p:last-child { margin-bottom: 0; }
+
+/* ===== リスト ===== */
+ul, ol {
+  padding-left: 1.5em;
+  margin-bottom: 12px;
+}
+li { margin-bottom: 4px; }
+
+/* ===== 手順（番号付き） ===== */
+.steps {
+  counter-reset: step;
+  list-style: none;
+  padding-left: 0;
+}
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.steps li::before {
+  content: counter(step);
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.steps li strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ===== コードブロック ===== */
+pre, code {
+  font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+}
+code {
+  background: var(--gray-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--danger);
+}
+pre {
+  background: var(--gray-900);
+  color: #e5e7eb;
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: 13px;
+}
+
+/* ===== 注意・ヒントボックス ===== */
+.box {
+  padding: 14px 18px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.box-note {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: #1e40af;
+}
+.box-warning {
+  background: var(--warning-light);
+  border-color: var(--warning);
+  color: #92400e;
+}
+.box-danger {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: #991b1b;
+}
+.box-success {
+  background: var(--success-light);
+  border-color: var(--success);
+  color: #14532d;
+}
+.box-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== テーブル ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 16px 0;
+}
+thead th {
+  background: var(--gray-100);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--gray-700);
+  border-bottom: 2px solid var(--gray-300);
+}
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--gray-50); }
+
+/* ===== バッジ ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-primary { background: var(--primary-light); color: var(--primary); }
+.badge-success { background: var(--success-light); color: var(--success); }
+.badge-warning { background: var(--warning-light); color: var(--warning); }
+.badge-danger { background: var(--danger-light); color: var(--danger); }
+
+/* ===== タブ概要カード ===== */
+.tab-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+.tab-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 16px;
+}
+.tab-card-icon { font-size: 22px; margin-bottom: 6px; }
+.tab-card-name { font-weight: 700; font-size: 14px; color: var(--gray-900); }
+.tab-card-desc { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+
+/* ===== ===== 印刷スタイル ===== ===== */
+@media print {
+  body { background: white; font-size: 11pt; line-height: 1.6; }
+
+  .sidebar { display: none; }
+
+  .main {
+    margin-left: 0;
+    padding: 0;
+    max-width: 100%;
+  }
+
+  h2 {
+    page-break-before: always;
+    font-size: 16pt;
+  }
+  h2:first-of-type { page-break-before: avoid; }
+
+  h3 { font-size: 13pt; }
+  h4 { font-size: 11pt; }
+
+  section { margin-bottom: 0; }
+
+  pre {
+    background: #f3f4f6;
+    color: #111;
+    border: 1px solid #d1d5db;
+    page-break-inside: avoid;
+  }
+  code { background: #f3f4f6; color: #dc2626; }
+
+  .box { page-break-inside: avoid; }
+
+  table { page-break-inside: avoid; }
+
+  .tab-cards { display: block; }
+  .tab-card { display: inline-block; width: 48%; margin: 4px; page-break-inside: avoid; }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page-header { page-break-after: avoid; }
+
+  /* 印刷用ページ番号 */
+  @page {
+    margin: 20mm 18mm;
+    @bottom-center {
+      content: counter(page);
+      font-size: 10pt;
+    }
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== サイドバー目次 ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>EC販売管理ツール<br>取扱説明書</h1>
+    <p>Moxieque — 2026年4月版</p>
+  </div>
+
+  <div class="sidebar-section-title">基本</div>
+  <nav>
+    <a href="#intro">1. はじめに</a>
+    <a href="#install">2. インストール・起動方法</a>
+  </nav>
+
+  <div class="sidebar-section-title">各機能の使い方</div>
+  <nav>
+    <a href="#dashboard">3. ダッシュボードの見方</a>
+    <a href="#purchase">4. 仕入れ管理</a>
+    <a href="#sales">5. 販売登録</a>
+    <a href="#inventory">6. 在庫一覧</a>
+    <a href="#report">7. 利益レポート</a>
+    <a href="#master">8. 商品マスタ</a>
+    <a href="#settings">9. 設定</a>
+  </nav>
+
+  <div class="sidebar-section-title">上級・メンテナンス</div>
+  <nav>
+    <a href="#rakumart">10. ラクマート連携設定</a>
+    <a href="#backup">11. バックアップ・復元</a>
+    <a href="#trouble">12. トラブルシューティング</a>
+  </nav>
+</aside>
+
+<!-- ===== メインコンテンツ ===== -->
+<main class="main">
+
+  <!-- タイトルページ -->
+  <div class="page-header">
+    <h1>EC販売管理ツール 取扱説明書</h1>
+    <p>Moxieque 専用 / 非エンジニア向け / 2026年4月版</p>
+  </div>
+
+  <!-- ===== 1. はじめに ===== -->
+  <section id="intro">
+    <h2>1. はじめに</h2>
+
+    <p>このツールは、ラクマートを通じた<strong>仕入れ・在庫・販売の管理</strong>を一元化するためのものです。Webブラウザから操作できるため、特別な知識は不要です。</p>
+
+    <h3>このツールでできること</h3>
+    <div class="tab-cards">
+      <div class="tab-card">
+        <div class="tab-card-icon">📊</div>
+        <div class="tab-card-name">ダッシュボード</div>
+        <div class="tab-card-desc">売上・仕入れ・粗利をひと目で確認。期間選択でトレンドを把握。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">📥</div>
+        <div class="tab-card-name">仕入れ管理</div>
+        <div class="tab-card-desc">ラクマートの配送依頼書を自動取込。国際送料の按分計算も自動。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">📤</div>
+        <div class="tab-card-name">販売登録</div>
+        <div class="tab-card-desc">販売情報を入力すると、原価・粗利がリアルタイムで表示される。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">📦</div>
+        <div class="tab-card-name">在庫一覧</div>
+        <div class="tab-card-desc">在庫数を直接編集。少ない商品には警告アイコンが表示される。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">💰</div>
+        <div class="tab-card-name">利益レポート</div>
+        <div class="tab-card-desc">月次・商品別・チャネル別に利益を分析。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">🏷️</div>
+        <div class="tab-card-name">商品マスタ</div>
+        <div class="tab-card-desc">商品情報の登録・編集・CSV一括管理。</div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">⚙️</div>
+        <div class="tab-card-name">設定</div>
+        <div class="tab-card-desc">アラート閾値や手数料率の設定、バックアップ操作。</div>
+      </div>
+    </div>
+
+    <h3>動作環境</h3>
+    <table>
+      <thead><tr><th>項目</th><th>要件</th></tr></thead>
+      <tbody>
+        <tr><td>OS</td><td>macOS（推奨）</td></tr>
+        <tr><td>ブラウザ</td><td>Google Chrome / Safari / Firefox（最新版）</td></tr>
+        <tr><td>Python</td><td>3.10 以上</td></tr>
+        <tr><td>インターネット接続</td><td>ラクマート自動取込時のみ必要</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ このツールについて</div>
+      このツールはあなたのPC上でのみ動作します。データはすべてローカルに保存されており、外部サーバーには送信されません。
+    </div>
+  </section>
+
+  <!-- ===== 2. インストール・起動方法 ===== -->
+  <section id="install">
+    <h2>2. インストール・起動方法</h2>
+
+    <h3>macOS での起動</h3>
+
+    <ol class="steps">
+      <li>
+        <div><strong>ツールフォルダを開く</strong><br>
+        Finderでツールフォルダを開きます。</div>
+      </li>
+      <li>
+        <div><strong>「Start.command」をダブルクリック</strong><br>
+        黒いウィンドウ（ターミナル）が開き、自動でセットアップ・起動が始まります。</div>
+      </li>
+      <li>
+        <div><strong>ブラウザが自動で開く</strong><br>
+        数秒待つとブラウザでツールが自動的に表示されます。</div>
+      </li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ セキュリティ警告が出た場合</div>
+      macOSのセキュリティ設定により「開発元を確認できない」と表示される場合があります。その場合は：<br>
+      <strong>Start.command を右クリック → 開く → 開く</strong>
+    </div>
+
+    <h3>Windows での起動</h3>
+
+    <ol class="steps">
+      <li>
+        <div><strong>ツールフォルダを開く</strong><br>
+        エクスプローラーでツールフォルダを開きます。</div>
+      </li>
+      <li>
+        <div><strong>「Start.bat」をダブルクリック</strong><br>
+        黒いコマンドプロンプトが開き、自動でセットアップ・起動が始まります。</div>
+      </li>
+      <li>
+        <div><strong>ブラウザが自動で開く</strong><br>
+        数秒待つとブラウザでツールが自動的に表示されます。</div>
+      </li>
+    </ol>
+
+    <div class="box box-success">
+      <div class="box-title">✅ これだけでOK！</div>
+      「Start.command」（Mac）または「Start.bat」（Windows）をダブルクリックするだけで、ライブラリのインストールからブラウザを開くまで<strong>すべて自動</strong>で行われます。初回は数分かかる場合があります。
+    </div>
+
+    <div class="box box-warning">
+      <div class="box-title">⚠️ ターミナル/コマンドプロンプトは閉じないでください</div>
+      自動で開いたウィンドウはツールが動いている間は<strong>開いたまま</strong>にしてください。閉じるとツールが停止します。
+    </div>
+
+    <h3>初回のみ：Python が入っていない場合</h3>
+
+    <p>「Start.command」または「Start.bat」を実行してインストーラーが自動で開いた場合は、以下の手順でインストールを完了させてください。</p>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ インストーラーは自動でダウンロード・起動されます</div>
+      Python が入っていない場合、スクリプトが公式サイトから自動でダウンロードしてインストーラーを開きます。サイトを探したりダウンロードボタンを押す必要はありません。
+    </div>
+
+    <h4>macOS の場合</h4>
+    <ol class="steps">
+      <li>
+        <div><strong>インストーラーが自動で開く</strong><br>
+        黒いウィンドウにメッセージが表示されインストーラーが起動します。</div>
+      </li>
+      <li>
+        <div><strong>「Continue」→「Continue」→「Agree」→「Install」の順に進む</strong><br>
+        途中でMacのパスワード入力を求められます。PCにログインするときのパスワードを入力してください。</div>
+      </li>
+      <li>
+        <div><strong>「Installation Successful」と表示されたらウィンドウを閉じる</strong></div>
+      </li>
+      <li>
+        <div><strong>黒いウィンドウに戻り、Enterキーを押す</strong><br>
+        自動でツールの起動を続けます。</div>
+      </li>
+    </ol>
+
+    <h4>Windows の場合</h4>
+    <ol class="steps">
+      <li>
+        <div><strong>インストーラーが自動で開く</strong><br>
+        黒いウィンドウにメッセージが表示されインストーラーが起動します。</div>
+      </li>
+      <li>
+        <div><strong>インストーラーの画面で「Add Python to PATH」にチェックを入れる</strong><br>
+        左下の「Customize Installation」をクリックして進めます。</div>
+      </li>
+      <li>
+        <div><strong>「Install Now」をクリック</strong><br>
+        インストールが進行します。完了するまで待ってください。</div>
+      </li>
+      <li>
+        <div><strong>「Setup was successful」と表示されたらウィンドウを閉じる</strong></div>
+      </li>
+      <li>
+        <div><strong>黒いコマンドプロンプトに戻り、任意のキーを押す</strong><br>
+        自動でツールの起動を続けます。</div>
+      </li>
+    </ol>
+
+    <h3>ツールの終了方法</h3>
+    <ol class="steps">
+      <li><div>ブラウザのタブを閉じる</div></li>
+      <li><div>ターミナル/コマンドプロンプトのウィンドウを閉じる</div></li>
+    </ol>
+  </section>
+
+  <!-- ===== 3. ダッシュボード ===== -->
+  <section id="dashboard">
+    <h2>3. ダッシュボードの見方</h2>
+
+    <p>ツールを開くと最初に表示されるのがダッシュボードです。事業のKPI（重要指標）をひと目で確認できます。</p>
+
+    <h3>画面の構成</h3>
+    <table>
+      <thead><tr><th>表示項目</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td>売上合計</td><td>選択した期間の総販売金額</td></tr>
+        <tr><td>仕入れ合計</td><td>選択した期間の総仕入れ金額（国際送料含む）</td></tr>
+        <tr><td>粗利</td><td>売上 − 仕入れ原価 − 手数料</td></tr>
+        <tr><td>粗利率</td><td>粗利 ÷ 売上 × 100（%）</td></tr>
+        <tr><td>販売件数</td><td>選択した期間の販売登録数</td></tr>
+      </tbody>
+    </table>
+
+    <h3>期間の切り替え方</h3>
+    <ol class="steps">
+      <li><div>画面右上の<strong>期間選択プルダウン</strong>をクリックする</div></li>
+      <li>
+        <div>表示したい期間を選ぶ：
+          <ul>
+            <li><strong>今月</strong>：今月のデータのみ</li>
+            <li><strong>3ヶ月</strong>：直近3ヶ月分</li>
+            <li><strong>6ヶ月</strong>：直近6ヶ月分</li>
+            <li><strong>1年</strong>：直近12ヶ月分</li>
+            <li><strong>全期間</strong>：登録済みの全データ</li>
+          </ul>
+        </div>
+      </li>
+      <li><div>数値・グラフが自動で更新される</div></li>
+    </ol>
+
+    <h3>グラフの見方</h3>
+    <p>グラフには月ごとの売上・粗利の推移が表示されます。棒グラフの高さで規模感を把握し、線グラフで粗利のトレンドを確認してください。</p>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ ヒント</div>
+      グラフの棒や線にマウスを乗せると、その月の詳細な数値がポップアップで表示されます。
+    </div>
+  </section>
+
+  <!-- ===== 4. 仕入れ管理 ===== -->
+  <section id="purchase">
+    <h2>4. 仕入れ管理</h2>
+
+    <p>仕入れの登録には3つの方法があります。ラクマートを使っている場合は「自動取込」が最も便利です。</p>
+
+    <h3>A. ラクマート自動取込（推奨）</h3>
+    <p>ラクマートの配送依頼書からデータを自動で読み込みます。</p>
+
+    <ol class="steps">
+      <li>
+        <div><strong>「📥 仕入れ管理」タブをクリック</strong></div>
+      </li>
+      <li>
+        <div><strong>「ラクマート取込」エリアを確認</strong><br>
+        画面上部に「ラクマートサーバー: 稼働中 ✅」と表示されていればOKです。<br>
+        「停止中」の場合は「起動」ボタンを押してください。</div>
+      </li>
+      <li>
+        <div><strong>配送依頼書一覧を取得する</strong><br>
+        「配送依頼書一覧を取得」ボタンをクリックします。過去の依頼書が一覧で表示されます。</div>
+      </li>
+      <li>
+        <div><strong>取り込む依頼書を選択</strong><br>
+        各行の左端のチェックボックスにチェックを入れます（複数選択可）。</div>
+      </li>
+      <li>
+        <div><strong>「🚀 一括取得」ボタンをクリック</strong><br>
+        選択した依頼書の商品情報が自動取得されます。<br>
+        ※ 依頼書1件あたり20〜30秒かかります。複数選択時はその分時間がかかります。</div>
+      </li>
+      <li>
+        <div><strong>按分フォームで金額を確認・調整</strong><br>
+        国際送料などの追加コストが自動で各商品に按分されます。必要に応じて金額を修正してください。</div>
+      </li>
+      <li>
+        <div><strong>「登録」ボタンで仕入れを確定</strong></div>
+      </li>
+    </ol>
+
+    <div class="box box-warning">
+      <div class="box-title">⚠️ 注意：初回ログインが必要</div>
+      初めてラクマート取込を使う際は、ブラウザでラクマートにログインする必要があります。詳しくは「<a href="#rakumart">10. ラクマート連携設定</a>」を参照してください。
+    </div>
+
+    <h3>B. 個別登録</h3>
+    <p>1件ずつ手動で仕入れを入力する方法です。</p>
+
+    <ol class="steps">
+      <li><div>「📥 仕入れ管理」タブで「個別登録」セクションを開く</div></li>
+      <li>
+        <div>フォームに以下を入力する：
+          <table>
+            <thead><tr><th>項目</th><th>説明</th></tr></thead>
+            <tbody>
+              <tr><td>商品名</td><td>プルダウンから登録済み商品を選択</td></tr>
+              <tr><td>仕入れ数量</td><td>仕入れた個数</td></tr>
+              <tr><td>単価（元）</td><td>ラクマートでの商品単価（人民元）</td></tr>
+              <tr><td>国際送料（円）</td><td>この商品にかかる送料の按分額</td></tr>
+              <tr><td>仕入れ日</td><td>実際の仕入れ日</td></tr>
+              <tr><td>仕入れ先</td><td>ラクマート等のサプライヤー名</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li><div>「登録」ボタンをクリック</div></li>
+    </ol>
+
+    <h3>C. CSV一括取込</h3>
+    <p>Excelなどで作成したCSVファイルから複数の仕入れデータをまとめて登録できます。</p>
+
+    <ol class="steps">
+      <li><div>「CSVアップロード」ボタンをクリック</div></li>
+      <li><div>CSVファイルを選択する（文字コード: UTF-8）</div></li>
+      <li><div>プレビューで内容を確認して「登録」をクリック</div></li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ CSV形式について</div>
+      CSVのフォーマットは「<a href="#master">8. 商品マスタ</a>」のCSVダウンロード機能でサンプルを取得できます。列の順序を変えないでください。
+    </div>
+
+    <h3>按分計算の仕組み</h3>
+    <p>国際送料は複数商品でまとめて支払われることが多いため、商品ごとの原価計算に「按分」が必要です。このツールでは<strong>仕入れ数量で均等に按分</strong>します。</p>
+
+    <div class="box box-success">
+      <div class="box-title">✅ 例</div>
+      A商品を5個、B商品を5個仕入れ、国際送料が1,000円だった場合：<br>
+      → A商品：1,000円 ÷ 10個 × 5個 = 500円<br>
+      → B商品：1,000円 ÷ 10個 × 5個 = 500円
+    </div>
+  </section>
+
+  <!-- ===== 5. 販売登録 ===== -->
+  <section id="sales">
+    <h2>5. 販売登録</h2>
+
+    <p>商品を販売したら、このタブで記録を登録します。原価・粗利はリアルタイムで自動計算されます。</p>
+
+    <h3>販売を登録する</h3>
+    <ol class="steps">
+      <li><div>「📤 販売登録」タブをクリック</div></li>
+      <li>
+        <div>フォームに必要事項を入力する：
+          <table>
+            <thead><tr><th>項目</th><th>説明</th></tr></thead>
+            <tbody>
+              <tr><td>商品名 <span class="badge badge-danger">必須</span></td><td>プルダウンから選択。選択すると原価が自動表示される</td></tr>
+              <tr><td>販売数量 <span class="badge badge-danger">必須</span></td><td>販売した個数</td></tr>
+              <tr><td>販売単価 <span class="badge badge-danger">必須</span></td><td>1個あたりの販売価格（円）</td></tr>
+              <tr><td>販売チャネル</td><td>Amazon / メルカリ / Yahoo! / その他</td></tr>
+              <tr><td>手数料率</td><td>販売チャネルの手数料（%）。設定のデフォルト値が自動入力</td></tr>
+              <tr><td>販売日</td><td>実際の販売日</td></tr>
+              <tr><td>メモ</td><td>任意のメモ</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>
+        <div><strong>粗利を確認</strong><br>
+        フォーム下部に「原価」「販売小計」「手数料」「粗利」が自動計算されます。</div>
+      </li>
+      <li><div>「登録」ボタンをクリック</div></li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ 原価の計算方法</div>
+      原価は<strong>移動平均法</strong>で自動計算されます。仕入れのたびに単価が更新されるため、常に最新の平均原価が使われます。
+    </div>
+
+    <h3>登録済み販売データを編集・削除する</h3>
+    <ol class="steps">
+      <li><div>「販売履歴」テーブルで対象の行を探す</div></li>
+      <li><div>行右端の「✏️ 編集」ボタンをクリックするとフォームに内容が読み込まれる</div></li>
+      <li><div>内容を修正して「更新」ボタンをクリック</div></li>
+    </ol>
+
+    <div class="box box-danger">
+      <div class="box-title">⚠️ 削除は元に戻せません</div>
+      「🗑️ 削除」ボタンをクリックすると確認ダイアログが表示されます。削除後は復元できないため、バックアップを取ってから行ってください。
+    </div>
+  </section>
+
+  <!-- ===== 6. 在庫一覧 ===== -->
+  <section id="inventory">
+    <h2>6. 在庫一覧</h2>
+
+    <p>現在の在庫数をリアルタイムで確認・編集できます。</p>
+
+    <h3>在庫一覧の見方</h3>
+    <table>
+      <thead><tr><th>列</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td>商品名 / SKU</td><td>商品マスタに登録された名前と管理コード</td></tr>
+        <tr><td>現在庫数</td><td>現在の在庫数量（直接編集可）</td></tr>
+        <tr><td>移動平均原価</td><td>直近の仕入れデータから自動計算された1個あたりの原価</td></tr>
+        <tr><td>在庫評価額</td><td>在庫数 × 移動平均原価</td></tr>
+        <tr><td>状態</td><td>⚠️ アイコンが表示されている場合は在庫が少ない（要補充）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>在庫数を直接編集する</h3>
+    <ol class="steps">
+      <li><div>対象商品の「在庫数」セルをクリック</div></li>
+      <li><div>新しい数値を入力してEnterキーを押す（または別のセルをクリック）</div></li>
+      <li><div>変更が自動保存され、変更履歴が記録される</div></li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ 在庫数が自動で変わるタイミング</div>
+      <ul>
+        <li>仕入れ登録時：在庫数が増加します</li>
+        <li>販売登録時：在庫数が減少します</li>
+        <li>直接編集時：入力した数値に変更されます（棚卸し時などに使用）</li>
+      </ul>
+    </div>
+
+    <h3>在庫アラートの設定</h3>
+    <p>在庫が指定数以下になると ⚠️ マークが表示されます。閾値は「<a href="#settings">⚙️ 設定タブ</a>」で変更できます（初期値: 3個）。</p>
+  </section>
+
+  <!-- ===== 7. 利益レポート ===== -->
+  <section id="report">
+    <h2>7. 利益レポート</h2>
+
+    <p>販売・仕入れデータを集計して、様々な切り口で利益を確認できます。</p>
+
+    <h3>レポートの種類</h3>
+    <table>
+      <thead><tr><th>レポート</th><th>内容</th><th>活用シーン</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>月次レポート</strong></td>
+          <td>月ごとの売上・原価・粗利・粗利率の一覧</td>
+          <td>月次振り返り、季節性の把握</td>
+        </tr>
+        <tr>
+          <td><strong>商品別レポート</strong></td>
+          <td>商品ごとの売上・粗利・粗利率の一覧</td>
+          <td>売れ筋・利益商品の特定</td>
+        </tr>
+        <tr>
+          <td><strong>チャネル別レポート</strong></td>
+          <td>Amazon・メルカリ等の販売チャネルごとの集計</td>
+          <td>出品先の比較・最適化</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>レポートの読み方</h3>
+    <ul>
+      <li><strong>粗利率が高い商品</strong>＝利益効率が良い商品。仕入れを増やす候補。</li>
+      <li><strong>売上が高いが粗利率が低い商品</strong>＝売れているが利益が薄い。価格見直しや仕入れコスト削減を検討。</li>
+      <li><strong>チャネル別粗利率</strong>＝手数料の違いが影響します。手数料の低いチャネルで売れると利益が改善。</li>
+    </ul>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ 粗利の計算式</div>
+      <strong>粗利 = 販売金額 − （原価 × 数量） − 手数料</strong><br>
+      手数料は販売登録時に入力した手数料率で計算されます。
+    </div>
+  </section>
+
+  <!-- ===== 8. 商品マスタ ===== -->
+  <section id="master">
+    <h2>8. 商品マスタ</h2>
+
+    <p>商品の基本情報を管理します。仕入れ・販売登録で使う商品はここに登録が必要です。</p>
+
+    <h3>商品を1件登録する</h3>
+    <ol class="steps">
+      <li><div>「🏷️ 商品マスタ」タブをクリック</div></li>
+      <li>
+        <div>「商品追加」フォームに以下を入力する：
+          <table>
+            <thead><tr><th>項目</th><th>説明</th></tr></thead>
+            <tbody>
+              <tr><td>商品名 <span class="badge badge-danger">必須</span></td><td>管理しやすい名前を入力</td></tr>
+              <tr><td>SKU <span class="badge badge-danger">必須</span></td><td>自社管理コード（例: MOX-001）。重複不可</td></tr>
+              <tr><td>ラクマートURL</td><td>商品ページのURL（画像自動取得に使用）</td></tr>
+              <tr><td>メモ</td><td>サイズ・カラーなど補足情報</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li><div>「登録」ボタンをクリック</div></li>
+    </ol>
+
+    <h3>CSV で一括ダウンロード</h3>
+    <ol class="steps">
+      <li><div>「CSVダウンロード」ボタンをクリック</div></li>
+      <li><div>商品マスタ全件がCSVファイルとしてダウンロードされます</div></li>
+      <li><div>ExcelやGoogleスプレッドシートで開いて内容を確認・編集できます</div></li>
+    </ol>
+
+    <div class="box box-warning">
+      <div class="box-title">⚠️ CSVの文字コード</div>
+      ダウンロードされるCSVは <strong>UTF-8 BOM付き</strong> 形式です。Excelで開くと文字化けなく表示されます。アップロード時も同じ形式を使用してください。
+    </div>
+
+    <h3>CSV から一括アップロード</h3>
+    <ol class="steps">
+      <li><div>ダウンロードしたCSVをExcelで編集して保存する</div></li>
+      <li><div>「CSVアップロード」ボタンをクリックしてファイルを選択</div></li>
+      <li><div>プレビューで内容を確認してから「インポート」をクリック</div></li>
+    </ol>
+
+    <div class="box box-danger">
+      <div class="box-title">⚠️ SKUの変更に注意</div>
+      SKUは仕入れ・販売・在庫データと紐づく重要なキーです。後から変更すると、過去のデータとの整合性が崩れる可能性があります。SKUは最初に正しく設定してください。
+    </div>
+
+    <h3>商品を削除する</h3>
+    <p>商品マスタの各行右端の「削除」ボタンで削除できます。ただし、仕入れや販売データが存在する商品は削除しないでください（データの不整合が生じます）。</p>
+  </section>
+
+  <!-- ===== 9. 設定 ===== -->
+  <section id="settings">
+    <h2>9. 設定</h2>
+
+    <p>ツールの動作をカスタマイズできます。「⚙️ 設定」タブから変更します。</p>
+
+    <table>
+      <thead><tr><th>設定項目</th><th>説明</th><th>初期値</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>在庫アラート閾値</strong></td>
+          <td>この数以下になると在庫一覧に⚠️が表示される</td>
+          <td>3個</td>
+        </tr>
+        <tr>
+          <td><strong>デフォルト手数料率</strong></td>
+          <td>販売登録フォームに自動入力される手数料率</td>
+          <td>10%</td>
+        </tr>
+        <tr>
+          <td><strong>売上計算方式</strong></td>
+          <td>「税込」または「税抜」で計算するかを選択</td>
+          <td>税込</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>設定を変更する</h3>
+    <ol class="steps">
+      <li><div>「⚙️ 設定」タブをクリック</div></li>
+      <li><div>各項目の値を変更する</div></li>
+      <li><div>「保存」ボタンをクリック</div></li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ ラクマートサーバーの状態</div>
+      設定タブでラクマートサーバー（ラクマート連携を担うプログラム）の稼働状態を確認できます。「停止中」の場合は「起動」ボタンを押してください。
+    </div>
+  </section>
+
+  <!-- ===== 10. ラクマート連携設定 ===== -->
+  <section id="rakumart">
+    <h2>10. ラクマート連携設定</h2>
+
+    <p>ラクマートの配送依頼書を自動取込するには、初回に一度ブラウザでログインが必要です。</p>
+
+    <h3>初回ログイン手順</h3>
+
+    <div class="box box-warning">
+      <div class="box-title">⚠️ 事前確認</div>
+      この操作はツール（サーバー）が起動している状態で行ってください。起動方法は「<a href="#install">2. インストール・起動方法</a>」を参照。
+    </div>
+
+    <ol class="steps">
+      <li>
+        <div><strong>ツールを起動してブラウザで開く</strong><br>
+        <code>http://localhost:8080</code> にアクセスします。</div>
+      </li>
+      <li>
+        <div><strong>「仕入れ管理」タブを開く</strong><br>
+        ラクマートサーバーが「稼働中」になっていることを確認します。「停止中」の場合は「起動」ボタンを押します。</div>
+      </li>
+      <li>
+        <div><strong>「配送依頼書一覧を取得」をクリックする</strong><br>
+        初回は自動的にブラウザが開き、ラクマートのログイン画面が表示されます。</div>
+      </li>
+      <li>
+        <div><strong>ラクマートにログインする</strong><br>
+        自動で開いたブラウザ（Chromium）でラクマートのIDとパスワードを入力してログインします。</div>
+      </li>
+      <li>
+        <div><strong>ログイン完了後、ブラウザを閉じずに待つ</strong><br>
+        ツールが自動でデータを取得します。しばらく待つと配送依頼書の一覧が表示されます。</div>
+      </li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ 2回目以降</div>
+      ログイン情報はPC上のブラウザに保持されます。次回からは自動でログインされるため、手動ログインは不要です（ただし、ログアウトした場合や長期間経過した場合は再ログインが必要です）。
+    </div>
+
+    <h3>ラクマートサーバーについて</h3>
+    <p>ラクマート連携には <code>rakumart_server.py</code>（ポート8766）というプログラムが使われます。これは <code>app.py</code> を起動した際に自動で起動されます。</p>
+
+    <table>
+      <thead><tr><th>項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>ポート番号</td><td>8766</td></tr>
+        <tr><td>起動タイミング</td><td><code>python3 app.py</code> 実行時に自動起動</td></tr>
+        <tr><td>確認方法</td><td>設定タブ または 仕入れ管理タブのサーバー状態表示</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 11. バックアップ・復元 ===== -->
+  <section id="backup">
+    <h2>11. バックアップ・復元</h2>
+
+    <p>データはすべてPC内のJSONファイルに保存されています。定期的なバックアップを強くお勧めします。</p>
+
+    <h3>データの保存場所</h3>
+    <pre><code>moxieque-ec-tool/
+└── data/
+    ├── products.json        商品マスタ
+    ├── purchases.json       仕入れデータ
+    ├── sales.json           販売データ
+    ├── inventory_history.json 在庫編集履歴
+    └── config.json          設定</code></pre>
+
+    <h3>バックアップを取る方法（ツールから）</h3>
+    <ol class="steps">
+      <li><div>「⚙️ 設定」タブをクリック</div></li>
+      <li><div>「バックアップをダウンロード」ボタンをクリック</div></li>
+      <li><div>ZIPファイルがダウンロードされます。定期的に外付けHDDやクラウドストレージに保存してください。</div></li>
+    </ol>
+
+    <h3>バックアップを取る方法（手動）</h3>
+    <ol class="steps">
+      <li><div>Finderで <code>moxieque-ec-tool/data/</code> フォルダを開く</div></li>
+      <li><div>フォルダ全体をコピーして、別の場所（デスクトップ、外付けHDDなど）に貼り付け</div></li>
+      <li><div>フォルダ名に日付を付けて保存（例：<code>data_backup_20260402</code>）</div></li>
+    </ol>
+
+    <div class="box box-warning">
+      <div class="box-title">⚠️ 商品画像もバックアップする</div>
+      商品画像は <code>static/images/</code> フォルダに保存されています。別PCへ移行する際や万一の場合に備えて、このフォルダもバックアップしてください。
+    </div>
+
+    <h3>データを復元する方法</h3>
+    <ol class="steps">
+      <li><div>ツールを停止する（ターミナルで <code>Ctrl + C</code>）</div></li>
+      <li><div>現在の <code>data/</code> フォルダを別の場所に退避（念のため残しておく）</div></li>
+      <li><div>バックアップした <code>data/</code> フォルダを元の場所に貼り付け</div></li>
+      <li><div>ツールを再起動する（<code>python3 app.py</code>）</div></li>
+    </ol>
+
+    <div class="box box-danger">
+      <div class="box-title">⚠️ 現時点の制限</div>
+      設定タブの「バックアップから復元」ボタンは現在準備中です。復元は上記の手動手順で行ってください。
+    </div>
+
+    <h3>推奨バックアップ頻度</h3>
+    <table>
+      <thead><tr><th>頻度</th><th>タイミング</th></tr></thead>
+      <tbody>
+        <tr><td>週1回以上</td><td>毎週末など定期的に</td></tr>
+        <tr><td>大量データ入力後</td><td>仕入れや販売を大量に登録した直後</td></tr>
+        <tr><td>PC移行・OSアップデート前</td><td>作業前に必ずバックアップを取る</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 12. トラブルシューティング ===== -->
+  <section id="trouble">
+    <h2>12. トラブルシューティング</h2>
+
+    <h3>よくある問題と解決方法</h3>
+
+    <h4>🔴 ブラウザで「このサイトに接続できません」と表示される</h4>
+    <div class="box box-danger">
+      <div class="box-title">原因</div>
+      サーバー（<code>app.py</code>）が起動していません。
+    </div>
+    <ol class="steps">
+      <li><div>ターミナルを開く</div></li>
+      <li><div><code>cd /Users/inamikatsutoshi/Documents/Claude/moxieque-ec-tool</code> を実行</div></li>
+      <li><div><code>python3 app.py</code> を実行</div></li>
+      <li><div>ブラウザで <code>http://localhost:8080</code> を再度開く</div></li>
+    </ol>
+
+    <h4>🔴 ラクマートサーバーが「停止中」のまま起動しない</h4>
+    <ol class="steps">
+      <li><div>「⚙️ 設定」タブ → 「ラクマートサーバー起動」ボタンをクリック</div></li>
+      <li><div>それでも起動しない場合は、ツール自体を再起動する（ターミナルで <code>Ctrl+C</code> → <code>python3 app.py</code>）</div></li>
+    </ol>
+
+    <h4>🔴 ラクマート取込が「タイムアウト」する</h4>
+    <div class="box box-warning">
+      <div class="box-title">原因と対処</div>
+      ラクマートのサーバーへのアクセスに時間がかかっています。1件あたり20〜30秒かかります。複数件を選択した場合はさらに時間がかかります。ローディング表示が出ていれば正常に処理中です。しばらく待ってください。
+    </div>
+
+    <h4>🔴 「ラクマートにログインしてください」と表示される</h4>
+    <ol class="steps">
+      <li><div>自動で開くChromiumブラウザでラクマートにログインする</div></li>
+      <li><div>「<a href="#rakumart">10. ラクマート連携設定</a>」の手順を参照</div></li>
+    </ol>
+
+    <h4>🔴 在庫数がマイナスになっている</h4>
+    <div class="box box-warning">
+      <div class="box-title">原因</div>
+      販売登録した数が、仕入れ登録した数を超えています。仕入れの登録漏れがないか確認してください。
+    </div>
+    <ol class="steps">
+      <li><div>仕入れ管理タブで該当商品の仕入れ記録を確認</div></li>
+      <li><div>漏れがあれば仕入れを追加登録</div></li>
+      <li><div>それでも解決しない場合は在庫一覧から直接修正する</div></li>
+    </ol>
+
+    <h4>🔴 商品マスタをCSVでアップロードしたが文字化けする</h4>
+    <ol class="steps">
+      <li><div>CSVファイルを<strong>UTF-8（BOM付き）</strong>で保存し直す</div></li>
+      <li>
+        <div>Excelの場合：「名前を付けて保存」→ ファイル形式で「CSV UTF-8（コンマ区切り）」を選択</div>
+      </li>
+      <li><div>再度アップロードを試みる</div></li>
+    </ol>
+
+    <h4>🔴 ツールが急に遅くなった / 動かなくなった</h4>
+    <ol class="steps">
+      <li><div>ターミナルで <code>Ctrl + C</code> を押してサーバーを停止する</div></li>
+      <li><div>ブラウザのキャッシュをクリアする（<code>Cmd + Shift + R</code>）</div></li>
+      <li><div><code>python3 app.py</code> でサーバーを再起動する</div></li>
+    </ol>
+
+    <h4>🔴 PCを買い替えた / 別のPCで使いたい</h4>
+    <ol class="steps">
+      <li><div>旧PCの <code>moxieque-ec-tool/</code> フォルダ全体をコピー（外付けHDDまたはクラウドストレージ経由）</div></li>
+      <li><div>新PCに同じ場所（またはわかりやすい場所）に貼り付け</div></li>
+      <li><div>新PCでPython・ライブラリをインストール（「<a href="#install">2. インストール・起動方法</a>」参照）</div></li>
+      <li><div><code>python3 app.py</code> で起動する</div></li>
+    </ol>
+
+    <div class="box box-note">
+      <div class="box-title">ℹ️ 解決しない場合</div>
+      上記で解決しない場合は、ターミナルに表示されているエラーメッセージをスクリーンショットまたはコピーして、開発者にお問い合わせください。
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <hr style="margin: 40px 0; border: none; border-top: 1px solid var(--gray-200);">
+  <p style="font-size: 13px; color: var(--gray-500); text-align: center;">
+    Moxieque EC販売管理ツール 取扱説明書 — 2026年4月版<br>
+    本マニュアルはツールの更新に伴い随時改訂されます。
+  </p>
+
+</main>
+
+</body>
+</html>

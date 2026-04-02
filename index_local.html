@@ -1,0 +1,4052 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC販売管理ツール</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #4a86e8;
+    --success: #34a853;
+    --warning: #fbbc04;
+    --danger: #ea4335;
+    --dark: #1a1a2e;
+    --card-bg: #ffffff;
+    --bg: #f0f4f8;
+    --text: #2d3748;
+    --text-light: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--dark);
+    color: white;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .header h1 { font-size: 18px; font-weight: 700; flex: 1; }
+  .header .badge {
+    background: var(--primary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ナビ */
+  .nav {
+    background: white;
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+    padding: 0 24px;
+  }
+  .nav-btn {
+    padding: 14px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { color: var(--primary); }
+  .nav-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* コンテンツ */
+  .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* カード */
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* KPIカード */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--primary);
+  }
+  .kpi-card.success::before { background: var(--success); }
+  .kpi-card.warning::before { background: var(--warning); }
+  .kpi-card.danger::before { background: var(--danger); }
+  .kpi-label { font-size: 12px; color: var(--text-light); font-weight: 600; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--text-light); margin-top: 6px; }
+  .kpi-icon { position: absolute; top: 16px; right: 16px; font-size: 24px; opacity: 0.15; }
+
+  /* グリッド */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* フォーム */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .form-group label .required { color: var(--danger); margin-left: 4px; }
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    background: white;
+  }
+  .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(74,134,232,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* ボタン */
+  .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #3b73d4; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,134,232,0.3); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #2e9447; transform: translateY(-1px); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: white; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+  /* テーブル */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: #f7fafc;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr:hover { background: #f7fafc; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* バッジ */
+  .badge-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-blue { background: #ebf4ff; color: #2b6cb0; }
+  .badge-green { background: #e6fffa; color: #276749; }
+  .badge-red { background: #fff5f5; color: #c53030; }
+  .badge-yellow { background: #fffff0; color: #975a16; }
+  .badge-purple { background: #faf5ff; color: #553c9a; }
+
+  /* アラート */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-success { background: #e6fffa; color: #276749; border: 1px solid #9ae6b4; }
+  .alert-danger { background: #fff5f5; color: #c53030; border: 1px solid #fc8181; }
+  .alert-warning { background: #fffff0; color: #975a16; border: 1px solid #f6e05e; }
+
+  /* ローディング */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--text-light);
+    font-size: 14px;
+    gap: 12px;
+  }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 在庫アラート */
+  .stock-ok { color: var(--success); font-weight: 600; }
+  .stock-low { color: var(--warning); font-weight: 600; background-color: #ffe6e6; }
+  .stock-out { color: var(--danger); font-weight: 600; }
+
+  /* 在庫編集フィールド */
+  .stock-input {
+    border: 1px solid #ddd;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .stock-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 4px rgba(74, 134, 232, 0.3);
+    outline: none;
+  }
+  .stock-input.saving {
+    background-color: #fff9e6;
+    cursor: wait;
+    opacity: 0.7;
+  }
+  .stock-input.success {
+    background-color: #e6ffe6;
+    border-color: var(--success);
+  }
+  /* 販売一覧 インライン編集 */
+  .sale-inline-input {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 13px;
+    text-align: right;
+    transition: border-color 0.3s;
+  }
+  .sale-inline-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(74,134,232,0.15); }
+
+  /* 商品マスタ インライン編集 */
+  .master-edit-input {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 6px;
+    background: transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .master-edit-input:hover { border-color: #ddd; background: #fff; }
+  .master-edit-input:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 2px rgba(74,134,232,0.15); }
+  .master-edit-input.saving-sku { background: #fff9e6; opacity: 0.7; cursor: wait; }
+
+  /* ソートヘッダー */
+  .inv-sort-th { cursor: pointer; user-select: none; white-space: nowrap; }
+  .inv-sort-th:hover { background: #eef2ff; }
+  .inv-sort-icon { font-size: 10px; margin-left: 3px; color: #aaa; }
+
+  /* ページタイトル */
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+
+  /* 空データ */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* 数値 */
+  .num-positive { color: var(--success); }
+  .num-negative { color: var(--danger); }
+
+  /* チャート */
+  .chart-container { position: relative; height: 260px; }
+
+  /* CSVインポート */
+  .import-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-light);
+    font-size: 14px;
+  }
+  .import-dropzone:hover { border-color: var(--primary); color: var(--primary); background: rgba(74,134,232,0.04); }
+  .import-dropzone input[type="file"] { display: none; }
+  .import-format {
+    background: #f7fafc;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .import-format code {
+    background: #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  /* 画像モーダル */
+  .image-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .image-modal.active { display: flex; }
+  .image-modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    overflow: auto;
+  }
+  .image-modal-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .image-modal-close:hover { background: #e2e8f0; }
+  .image-modal-img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 8px;
+  }
+  .image-modal-title {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+  }
+</style>
+<script>
+// =============================================
+// Flask API ヘルパー
+// =============================================
+function api(endpoint, body, timeoutMs = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  return fetch('/api/' + endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body !== undefined ? body : {}),
+    signal: ctrl.signal
+  })
+  .then(r => {
+    clearTimeout(timer);
+    if (!r.ok) {
+      return r.text().then(t => {
+        let msg = t || '';
+        try { const j = JSON.parse(t); msg = j.error || j.message || t; } catch(_) {}
+        throw new Error(msg || `サーバーエラー (HTTP ${r.status})`);
+      });
+    }
+    return r.json();
+  })
+  .catch(err => {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') {
+      showOfflineBanner('⏱️ タイムアウト: サーバーからの応答がありません（15秒）');
+      throw new Error('タイムアウトしました。サーバーの状態を確認してください。');
+    }
+    if (err.message === 'Failed to fetch' || err instanceof TypeError) {
+      showOfflineBanner('⚠️ サーバーに接続できません。app.py が起動しているか確認してください。');
+      throw new Error('サーバーに接続できません。接続を確認してください。');
+    }
+    hideOfflineBanner();
+    throw err;
+  });
+}
+</script>
+</head>
+<body>
+
+<div id="offline-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:10px 16px; font-size:13px; font-weight:600; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+  <span id="offline-banner-msg"></span>
+  <button onclick="hideOfflineBanner()" style="margin-left:16px; background:transparent; border:1px solid rgba(255,255,255,0.7); color:#fff; padding:2px 10px; border-radius:4px; cursor:pointer; font-size:12px;">✕ 閉じる</button>
+</div>
+
+<div class="header">
+  <h1>📦 EC販売管理ツール</h1>
+  <span class="badge" id="currentMonth"></span>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchTab('dashboard')">📊 ダッシュボード</button>
+  <button class="nav-btn" onclick="switchTab('purchase')">📥 仕入れ管理</button>
+  <button class="nav-btn" onclick="switchTab('sale')">📤 販売登録</button>
+  <button class="nav-btn" onclick="switchTab('inventory')">📦 在庫一覧</button>
+  <button class="nav-btn" onclick="switchTab('report')">💰 利益レポート</button>
+  <button class="nav-btn" onclick="switchTab('product')">🏷️ 商品マスタ</button>
+  <button class="nav-btn" onclick="switchTab('settings')">⚙️ 設定</button>
+</nav>
+
+<div class="content">
+
+  <!-- ===================== ダッシュボード ===================== -->
+  <div id="tab-dashboard" class="tab-panel active">
+    <h2 class="page-title">📊 今月のサマリー</h2>
+    <div id="dashboard-content">
+      <div class="loading"><div class="spinner"></div>読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- ===================== 仕入れ管理 ===================== -->
+  <div id="tab-purchase" class="tab-panel">
+    <h2 class="page-title">📥 仕入れ管理</h2>
+
+    <div id="purchase-alert"></div>
+
+    <!-- ========== Section 1: ラクマート一括仕入れ ========== -->
+    <div style="background:linear-gradient(135deg,#f0f8ff,#e6f2ff); border-left:4px solid var(--primary); padding:14px; border-radius:8px; margin-bottom:20px;">
+      <div style="font-size:15px; font-weight:700; color:var(--primary); margin-bottom:4px;">🛒 ラクマート一括仕入れ</div>
+      <div style="font-size:12px; color:var(--text-light);">配送依頼書から自動で商品を取得し、関税・送料を按分して一括登録します</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">① 仕入れデータを読み込む</div>
+
+      <!-- ラクマート自動取得 -->
+      <div style="background:linear-gradient(135deg,#fff5f5,#ffe8e8); border:1px solid #ffcccc; border-radius:10px; padding:16px; margin-bottom:16px;">
+        <div style="font-weight:600; font-size:15px; margin-bottom:6px;">🛒 ラクマートから自動取得</div>
+        <div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">
+          <code style="background:#fff;padding:2px 6px;border-radius:4px;font-size:12px;">rakumart_server.py</code> を起動中なら、ボタン1つで最新の配送依頼書を自動取得します。
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="fetchRakumartLatest()" id="rakumart-fetch-btn"
+            style="background:#e53935; border-color:#e53935;">
+            🛒 ラクマート仕入れ（自動取得）
+          </button>
+          <div id="rakumart-indicator" style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span id="rakumart-dot" style="width:10px;height:10px;border-radius:50%;background:#ccc;display:inline-block;flex-shrink:0;"></span>
+            <span id="rakumart-indicator-label" style="color:var(--text-light);">確認中...</span>
+          </div>
+          <span id="rakumart-status" style="font-size:13px; color:var(--text-light);"></span>
+          <button class="btn btn-sm btn-outline" onclick="showPastDeliveryList()" style="font-size:11px; padding:4px 8px; color:var(--text-light); border-color:var(--border);">
+            📋 過去から選択
+          </button>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--text-light);">
+          ※ サーバー未起動の場合: ターミナルで
+          <code style="background:#fff;padding:2px 6px;border-radius:4px;">python3 rakumart_server.py</code> を実行してください
+        </div>
+      </div>
+
+      <!-- CSV手動アップロード -->
+      <div style="border-top:1px solid var(--border); padding-top:14px;">
+        <div style="font-size:13px; color:var(--text-light); margin-bottom:10px;">または、按分計算シート-表1.csv を手動でアップロード：</div>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer; margin:0;">
+          📂 按分計算CSVを選択
+          <input type="file" id="abn-purchase-csv-input" accept=".csv" onchange="handleAbnPurchaseCSV(this)" style="display:none;">
+        </label>
+      </div>
+
+      <div id="abn-purchase-preview" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Step 2: 追加費用入力 -->
+    <div class="card" id="abn-expenses-card" style="display:none;">
+      <div class="card-title">② 追加費用を入力</div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">関税 (¥)</label>
+          <input type="number" id="abn-customs" class="form-input" value="0" min="0" oninput="calcAbn()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">輸入消費税 (¥)</label>
+          <input type="number" id="abn-tax" class="form-input" value="0" min="0" oninput="calcAbn()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">国内送料 (¥)</label>
+          <input type="number" id="abn-domestic-ship" class="form-input" value="0" min="0" oninput="calcAbn()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">その他経費 (¥)</label>
+          <input type="number" id="abn-other" class="form-input" value="0" min="0" oninput="calcAbn()">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">仕入れ日</label>
+          <input type="date" id="abn-purchase-date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">按分方式</label>
+          <div style="display:flex; gap:20px; align-items:center; height:42px;">
+            <label style="font-size:14px; cursor:pointer;"><input type="radio" name="abn-method" value="amount" checked onchange="calcAbn()"> 金額按分（推奨）</label>
+            <label style="font-size:14px; cursor:pointer;"><input type="radio" name="abn-method" value="qty" onchange="calcAbn()"> 個数按分</label>
+          </div>
+        </div>
+      </div>
+      <div id="abn-total-summary" style="background:var(--bg); border-radius:8px; padding:12px; font-size:14px; margin-top:8px;"></div>
+    </div>
+
+    <!-- Step 3: 按分結果と登録 -->
+    <div class="card" id="abn-result-card" style="display:none;">
+      <div class="card-title">③ 按分結果・一括登録</div>
+      <div id="abn-result-alert"></div>
+      <div id="abn-result-table"></div>
+      <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button id="abn-imgupdate-btn" class="btn btn-secondary" onclick="updateAbnImages()" title="仕入れ登録済みの商品の画像URLだけを商品マスタに反映します">📸 商品画像URLを更新</button>
+        <button id="abn-submit-btn" class="btn btn-primary" onclick="submitAbnPurchases()">📥 一括仕入れ登録する</button>
+      </div>
+    </div>
+
+    <!-- ========== Section 2: 個別仕入れ登録 ========== -->
+    <div style="background:linear-gradient(135deg,#f0f8ff,#e6f2ff); border-left:4px solid var(--primary); padding:14px; border-radius:8px; margin:32px 0 20px;">
+      <div style="font-size:15px; font-weight:700; color:var(--primary); margin-bottom:4px;">✏️ 個別仕入れ登録</div>
+      <div style="font-size:12px; color:var(--text-light);">単一の商品を1件ずつ登録する場合はこちらをご使用ください</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">➕ 新規仕入れ登録</div>
+        <form id="purchaseForm" onsubmit="submitPurchase(event)">
+          <div class="form-group">
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div id="p-img-preview" style="flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <label>商品選択 <span class="required">*</span></label>
+                <select class="form-control" id="p-product-select" onchange="onPurchaseProductSelect(this)" required>
+                  <option value="">-- 読み込み中... --</option>
+                </select>
+                <div id="p-product-warning" style="display:none; color:var(--danger); font-size:12px; margin-top:6px;">
+                  ⚠️ 商品マスタに登録がありません。先に
+                  <a href="#" onclick="switchTab('product');return false;" style="color:var(--primary);">商品マスタ</a>
+                  へ商品を登録してください。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>商品名</label>
+              <input type="text" class="form-control" id="p-name" readonly style="background:#f7fafc; color:var(--text-light);">
+            </div>
+            <div class="form-group">
+              <label>SKU / 品番</label>
+              <input type="text" class="form-control" id="p-sku" readonly style="background:#f7fafc; color:var(--text-light);">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>仕入れ日 <span class="required">*</span></label>
+              <input type="date" class="form-control" id="p-date" required>
+            </div>
+            <div class="form-group">
+              <label>仕入れ先</label>
+              <input type="text" class="form-control" id="p-supplier" placeholder="例：中国サプライヤーA">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>仕入れ単価 (円) <span class="required">*</span></label>
+              <input type="number" class="form-control" id="p-unitcost" placeholder="例：800" min="0" required>
+            </div>
+            <div class="form-group">
+              <label>数量 <span class="required">*</span></label>
+              <input type="number" class="form-control" id="p-qty" placeholder="例：20" min="1" value="1" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>送料 (円)</label>
+              <input type="number" class="form-control" id="p-shipping" placeholder="例：2000" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label>販売価格 (円)</label>
+              <input type="number" class="form-control" id="p-saleprice" placeholder="例：1980" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>合計金額（自動計算）</label>
+            <input type="text" class="form-control" id="p-total" readonly style="background:#f7fafc; font-weight:700; color:var(--primary);" placeholder="単価×数量">
+          </div>
+          <div class="form-group">
+            <label>備考</label>
+            <input type="text" class="form-control" id="p-memo" placeholder="例：春コレクション先行仕入れ">
+          </div>
+          <button type="submit" class="btn btn-primary" id="p-submit">
+            📥 仕入れを登録する
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🕒 最近の仕入れ</div>
+        <div id="recent-purchases">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Section 3: CSVで一括登録 ========== -->
+    <div style="background:linear-gradient(135deg,#f0f8ff,#e6f2ff); border-left:4px solid var(--primary); padding:14px; border-radius:8px; margin:32px 0 20px;">
+      <div style="font-size:15px; font-weight:700; color:var(--primary); margin-bottom:4px;">📊 CSVで一括登録</div>
+      <div style="font-size:12px; color:var(--text-light);">CSVファイルをアップロードして複数の仕入れを一括登録します</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📂 CSVで一括取込</div>
+      <div id="purchase-import-alert"></div>
+      <div class="import-format">
+        列順: <code>仕入れ日(YYYY-MM-DD)</code> <code>商品名</code> <code>SKU</code> <code>仕入れ先</code> <code>仕入れ単価</code> <code>数量</code> <code>送料</code> <code>備考</code>
+        &nbsp;（1行目はヘッダーとして無視されます）
+      </div>
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-outline btn-sm" onclick="downloadPurchaseTemplate()">📄 テンプレートCSVをダウンロード</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer; margin:0;">
+          📂 CSVファイルを選択
+          <input type="file" id="purchase-csv-input" accept=".csv" onchange="handlePurchaseCSV(this)">
+        </label>
+      </div>
+      <div id="purchase-import-preview"></div>
+    </div>
+  </div>
+
+  <!-- ===================== 販売登録 ===================== -->
+  <div id="tab-sale" class="tab-panel">
+    <h2 class="page-title">📤 販売登録</h2>
+
+    <div id="sale-alert"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">➕ 新規販売登録</div>
+        <form id="saleForm" onsubmit="submitSale(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>販売日 <span class="required">*</span></label>
+              <input type="date" class="form-control" id="s-date" required>
+            </div>
+            <div class="form-group">
+              <label>販売チャネル <span class="required">*</span></label>
+              <select class="form-control" id="s-channel" required onchange="onChannelChange()">
+                <option value="">選択してください</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div id="s-img-preview" style="flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <label>商品選択（商品マスタから）</label>
+                <input type="text" class="form-control" id="s-product-search" placeholder="SKU・商品名で絞り込み..." oninput="filterSaleProducts()" style="margin-bottom:6px;">
+                <select class="form-control" id="s-product-select" onchange="onSaleProductSelect(this)">
+                  <option value="">-- 商品マスタから選択（任意）--</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>商品名 <span class="required">*</span></label>
+            <input type="text" class="form-control" id="s-name" placeholder="例：ステンレスタンブラー 500ml" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>SKU / 品番</label>
+              <input type="text" class="form-control" id="s-sku" placeholder="例：TBL-001">
+            </div>
+            <div class="form-group">
+              <label>販売価格 (円) <span class="required">*</span></label>
+              <input type="number" class="form-control" id="s-price" placeholder="例：2980" min="0" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>数量 <span class="required">*</span></label>
+              <input type="number" class="form-control" id="s-qty" placeholder="例：1" min="1" value="1" required>
+            </div>
+            <div class="form-group">
+              <label>手数料率 (%)</label>
+              <select class="form-control" id="s-fee-rate" onchange="calcSaleTotal()">
+                <option value="0">0%（手数料なし）</option>
+                <option value="3">3%（BASE）</option>
+                <option value="5.6">5.6%（BOOTH）</option>
+                <option value="8">8%（Yahoo!ショッピング）</option>
+                <option value="8.5">8.5%（楽天）</option>
+                <option value="10">10%（メルカリ / メルカリShops）</option>
+                <option value="15">15%（Amazon）</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>送料負担 (円)</label>
+              <input type="number" class="form-control" id="s-shipping" placeholder="例：0" min="0" value="0" oninput="calcSaleTotal()">
+            </div>
+            <div class="form-group">
+              <label>純売上（自動計算）</label>
+              <input type="text" class="form-control" id="s-net" readonly style="background:#f7fafc; font-weight:700; color:var(--success);" placeholder="売価×数量−手数料−送料">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>商品原価（移動平均）</label>
+              <div id="s-cost-display" style="background:#f5f5f5;padding:8px 12px;border-radius:4px;border:1px solid #ddd;font-weight:500;color:#555;min-height:38px;display:flex;align-items:center;">-</div>
+            </div>
+            <div class="form-group">
+              <label>粗利（利益）</label>
+              <div id="s-gross-profit-display" style="background:#f5f5f5;padding:8px 12px;border-radius:4px;border:1px solid #ddd;font-weight:600;min-height:38px;display:flex;align-items:center;gap:8px;">
+                <span id="s-gross-profit-amount" style="color:#555;">-</span>
+                <span id="s-gross-profit-rate" style="color:#999;font-size:12px;font-weight:400;">-</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>備考</label>
+            <input type="text" class="form-control" id="s-memo" placeholder="例：即決購入">
+          </div>
+          <button type="submit" class="btn btn-success" id="s-submit">
+            📤 販売を登録する
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🕒 最近の販売</div>
+        <div id="recent-sales">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 販売編集モーダル -->
+  <div id="sale-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:28px 32px;width:420px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+      <h3 style="margin:0 0 20px;font-size:16px;">✏️ 販売データを修正</h3>
+      <input type="hidden" id="edit-sale-id">
+      <div class="form-grid" style="gap:12px;">
+        <div class="form-group">
+          <label class="form-label">販売日</label>
+          <input type="date" id="edit-s-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">商品名</label>
+          <input type="text" id="edit-s-name" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SKU</label>
+          <input type="text" id="edit-s-sku" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">販売チャネル</label>
+          <input type="text" id="edit-s-channel" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">売価（円）</label>
+          <input type="number" id="edit-s-price" class="form-control" min="0" oninput="calcEditSaleNet()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">数量</label>
+          <input type="number" id="edit-s-qty" class="form-control" min="1" oninput="calcEditSaleNet()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">手数料率（%）</label>
+          <input type="number" id="edit-s-fee-rate" class="form-control" min="0" step="0.1" oninput="calcEditSaleNet()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">送料負担（円）</label>
+          <input type="number" id="edit-s-shipping" class="form-control" min="0" oninput="calcEditSaleNet()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">純売上（自動計算）</label>
+          <input type="text" id="edit-s-net" class="form-control" readonly style="background:#f5f7ff;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">備考</label>
+          <input type="text" id="edit-s-memo" class="form-control">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" onclick="closeSaleEditModal()">キャンセル</button>
+        <button type="button" class="btn btn-primary" onclick="saveSaleEdit()">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 在庫一覧 ===================== -->
+  <div id="tab-inventory" class="tab-panel">
+    <h2 class="page-title">📦 在庫一覧</h2>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <div class="card-title" style="margin:0">現在の在庫状況</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:13px; color:#555; white-space:nowrap;">⚠️ アラート閾値:</label>
+          <input type="number" id="low-stock-threshold" min="0" max="999" value="3"
+            style="width:60px; padding:4px 8px; border:1px solid #ddd; border-radius:4px; font-size:13px;"
+            onchange="saveLowStockThreshold()">
+          <span style="font-size:13px; color:#888;">個以下</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadInventory()">🔄 更新</button>
+        </div>
+      </div>
+      <div id="inventory-content">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 利益レポート ===================== -->
+  <div id="tab-report" class="tab-panel">
+    <h2 class="page-title">💰 利益レポート</h2>
+    <div class="card" style="margin-bottom:16px;padding:14px 18px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:4px;">
+          <button id="rbtn-monthly" class="btn btn-primary btn-sm" onclick="setReportMode('monthly')">月別</button>
+          <button id="rbtn-weekly"  class="btn btn-outline btn-sm" onclick="setReportMode('weekly')">週別</button>
+          <button id="rbtn-daily"   class="btn btn-outline btn-sm" onclick="setReportMode('daily')">日別</button>
+          <button id="rbtn-range"   class="btn btn-outline btn-sm" onclick="setReportMode('range')">期間指定</button>
+        </div>
+        <div id="report-count-wrap" style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:13px;color:#666;">表示:</span>
+          <select id="report-count" class="form-control" style="width:auto;padding:4px 8px;font-size:13px;" onchange="applyReportFilter()">
+            <option value="6">6件</option>
+            <option value="12">12件</option>
+            <option value="24">24件</option>
+            <option value="52">52件</option>
+          </select>
+        </div>
+        <div id="report-range-wrap" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="report-start" class="form-control" style="width:auto;padding:4px 8px;font-size:13px;">
+          <span style="color:#666;">〜</span>
+          <input type="date" id="report-end"   class="form-control" style="width:auto;padding:4px 8px;font-size:13px;">
+          <button class="btn btn-primary btn-sm" onclick="applyReportFilter()">適用</button>
+        </div>
+      </div>
+    </div>
+    <div id="report-content">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== 商品マスタ ===================== -->
+  <div id="tab-product" class="tab-panel">
+    <h2 class="page-title">🏷️ 商品マスタ</h2>
+    <div id="product-alert"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">➕ 商品登録</div>
+        <form id="productForm" onsubmit="submitProduct(event)">
+          <div class="form-group">
+            <label>商品名 <span class="required">*</span></label>
+            <input type="text" class="form-control" id="prod-name" placeholder="例：ステンレスタンブラー 500ml" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>SKU / 品番</label>
+              <input type="text" class="form-control" id="prod-sku" placeholder="例：TBL-001">
+            </div>
+            <div class="form-group">
+              <label>カテゴリ</label>
+              <input type="text" class="form-control" id="prod-category" placeholder="例：キッチン雑貨">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>仕入れ先</label>
+              <input type="text" class="form-control" id="prod-supplier" placeholder="例：アリエクスプレス">
+            </div>
+            <div class="form-group">
+              <label>標準仕入れ単価 (円)</label>
+              <input type="number" class="form-control" id="prod-cost" placeholder="例：800" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>メモ</label>
+            <input type="text" class="form-control" id="prod-memo" placeholder="メモ">
+          </div>
+          <button type="submit" class="btn btn-primary">🏷️ 商品を登録する</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 登録済み商品</div>
+        <div style="margin-bottom:12px;">
+          <input type="text" class="form-control" id="product-sku-search" placeholder="SKUで絞り込み..." oninput="filterProducts()" style="max-width:280px;">
+        </div>
+        <div id="product-list">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品データのダウンロード・アップロード -->
+    <div class="card">
+      <div class="card-title">📥📤 商品データのインポート・エクスポート</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="btn btn-outline btn-sm" onclick="downloadProductsMaster()">📥 CSVダウンロード</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('csv-upload-input').click()">📤 CSVアップロード</button>
+        <input type="file" id="csv-upload-input" accept=".csv" style="display:none;" onchange="handleProductsCSVUpload(this)">
+      </div>
+      <div id="csv-upload-alert"></div>
+    </div>
+  </div>
+
+  <!-- 設定タブ -->
+  <div id="tab-settings" class="tab-panel">
+    <h2 class="page-title">⚙️ 設定</h2>
+
+    <div class="grid-2">
+      <!-- 基本設定 -->
+      <div class="card">
+        <div class="card-title">📋 基本設定</div>
+        <div class="form-group">
+          <label>在庫僅少アラート閾値（個以下）</label>
+          <input type="number" class="form-control" id="settings-low-stock-threshold" min="0" max="100" placeholder="例：5">
+          <small style="color:var(--text-light); display:block; margin-top:4px;">この数量以下の在庫は「僅少」として警告表示されます</small>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label>デフォルト手数料率（%）</label>
+          <select class="form-control" id="settings-default-fee-rate">
+            <option value="0">0%（手数料なし）</option>
+            <option value="3">3%（BASE）</option>
+            <option value="5.6">5.6%（BOOTH）</option>
+            <option value="8">8%（Yahoo!ショッピング）</option>
+            <option value="8.5">8.5%（楽天）</option>
+            <option value="10">10%（メルカリ / メルカリShops）</option>
+            <option value="15">15%（Amazon）</option>
+          </select>
+          <small style="color:var(--text-light); display:block; margin-top:4px;">販売登録時のデフォルト手数料率です</small>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label>デフォルト売上計算方式</label>
+          <select class="form-control" id="settings-default-calculation">
+            <option value="standard">標準（売価 × 数量 - 手数料 - 送料）</option>
+            <option value="net">売価 × 数量のみ</option>
+          </select>
+          <small style="color:var(--text-light); display:block; margin-top:4px;">販売登録時の売上表示方法</small>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:20px; width:100%;">💾 設定を保存</button>
+      </div>
+
+      <!-- 情報・ヘルプ -->
+      <div class="card">
+        <div class="card-title">ℹ️ 情報</div>
+        <div style="font-size:12px; line-height:1.8; color:var(--text-light);">
+          <p><strong>EC販売管理ツール</strong></p>
+          <p>このツールは中国輸入ビジネスの仕入れ・販売・在庫管理を一元化するツールです。</p>
+
+          <p style="margin-top:16px;"><strong>主な機能：</strong></p>
+          <ul style="margin:8px 0; padding-left:20px;">
+            <li>ラクマート仕入れ自動取込</li>
+            <li>按分仕入れ計算</li>
+            <li>販売・在庫管理</li>
+            <li>利益レポート</li>
+            <li>商品マスタ管理</li>
+          </ul>
+
+          <p style="margin-top:16px;"><strong>ラクマートサーバー状態：</strong></p>
+          <div id="settings-rakumart-status" style="color:#999; font-size:11px; margin-top:6px;">確認中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ラクマート認証設定 -->
+    <div class="card">
+      <div class="card-title">🔐 ラクマート自動ログイン設定</div>
+      <p style="font-size:13px; color:var(--text-light); margin-bottom:12px;">ラクマートのユーザーIDとパスワードを設定すると、「配送依頼書一覧を取得」時に自動でログインします。</p>
+
+      <div class="form-group">
+        <label>ラクマート会員ID</label>
+        <input type="text" class="form-control" id="settings-rakumart-username" placeholder="例：12345678">
+        <small style="color:var(--text-light); display:block; margin-top:4px;">ラクマートのアカウント会員IDを入力してください</small>
+      </div>
+
+      <div class="form-group">
+        <label>ラクマートパスワード</label>
+        <input type="password" class="form-control" id="settings-rakumart-password" placeholder="パスワード">
+        <small style="color:var(--text-light); display:block; margin-top:4px;">ℹ️ パスワードはこのPC内の暗号化ファイルに保存されます。外部サーバーには送信されません。</small>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn btn-primary" onclick="saveRakumartCredentials()" style="flex:1;">💾 ラクマート設定を保存</button>
+        <button class="btn btn-outline" onclick="clearRakumartCredentials()">🗑️ クリア</button>
+      </div>
+      <div id="rakumart-save-alert" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- バックアップ -->
+    <div class="card">
+      <div class="card-title">💾 データバックアップ</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="downloadAllData()">📥 すべてのデータをダウンロード</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('backup-restore-input').click()">📤 バックアップから復元</button>
+        <input type="file" id="backup-restore-input" accept=".json" style="display:none;" onchange="restoreFromBackup(this)">
+      </div>
+      <div id="backup-alert" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// =============================================
+// 初期化
+// =============================================
+const now = new Date();
+document.getElementById('currentMonth').textContent = `${now.getFullYear()}年${now.getMonth()+1}月`;
+
+// 日付フィールドに今日をセット
+document.getElementById('p-date').value = today();
+document.getElementById('s-date').value = today();
+
+function today() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// チャネルリスト
+api('getChannels').then(channels => {
+  const sel = document.getElementById('s-channel');
+  channels.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+});
+
+// =============================================
+// タブ切り替え
+// =============================================
+const tabLoaded = {};
+function invalidateInventory() {
+  tabLoaded['dashboard'] = false;
+  tabLoaded['report']    = false;
+  tabLoaded['product']   = false;
+  if (document.getElementById('tab-inventory')?.classList.contains('active')) {
+    loadInventory();
+  } else {
+    tabLoaded['inventory'] = false;
+  }
+  if (document.getElementById('tab-product')?.classList.contains('active')) {
+    loadProducts();
+  }
+}
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+
+  // クリックイベントからの呼び出しならそのボタンを、プログラム呼び出しならonclick属性で特定
+  const clickedBtn = (typeof event !== 'undefined' && event && event.target && event.target.classList && event.target.classList.contains('nav-btn'))
+    ? event.target
+    : document.querySelector(`.nav-btn[onclick*="'${name}'"]`);
+  if (clickedBtn) clickedBtn.classList.add('active');
+
+  // 現在のタブをlocalStorageに保存（ページリフレッシュ後も復元）
+  try { localStorage.setItem('ec_active_tab', name); } catch(e) {}
+
+  if (!tabLoaded[name]) {
+    tabLoaded[name] = true;
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'purchase') { loadRecentPurchases(); loadProductsForPurchase(); }
+    if (name === 'sale') { loadRecentSales(); loadProductsForSale(); }
+    if (name === 'report') loadReport();
+    if (name === 'product') loadProducts();
+    if (name === 'settings') loadSettings();
+  } else {
+    // 仕入れ・販売タブは毎回商品マスタを再ロード（追加後に反映させるため）
+    if (name === 'purchase') loadProductsForPurchase();
+    if (name === 'sale') loadProductsForSale();
+    // 設定タブは毎回ラクマート状態をリロード
+    if (name === 'settings') checkRakumartStatusForSettings();
+  }
+  // 在庫タブは常にリロード（仕入れ・販売のたびに最新反映）
+  if (name === 'inventory') { loadLowStockThreshold(); loadInventory(); }
+}
+
+// 起動時: 保存済みタブがあれば復元、なければダッシュボード
+(function() {
+  let startTab = 'dashboard';
+  try { startTab = localStorage.getItem('ec_active_tab') || 'dashboard'; } catch(e) {}
+  switchTab(startTab);
+})();
+// 起動時に仕入れ・販売フォームの商品セレクトを初期ロード
+loadProductsForPurchase();
+
+// =============================================
+// ラクマートサーバー状態監視
+// =============================================
+let _rakumartOnline = null;
+let _rakumartPollTimer = null;
+
+function updateRakumartIndicator(online) {
+  const dot   = document.getElementById('rakumart-dot');
+  const label = document.getElementById('rakumart-indicator-label');
+  if (!dot || !label) return;
+
+  if (online) {
+    dot.style.background   = '#34a853';
+    dot.title              = '接続中';
+    label.style.color      = '#34a853';
+    label.textContent      = 'ラクマート 接続中';
+    label.onclick          = null;
+    label.style.cursor     = 'default';
+  } else {
+    dot.style.background   = '#ea4335';
+    dot.title              = '未接続';
+    label.style.color      = '#ea4335';
+    label.innerHTML        = 'ラクマート 未接続 <span style="text-decoration:underline;cursor:pointer;" onclick="startRakumartFromIndicator()">▶ 起動</span>';
+  }
+}
+
+async function checkRakumartStatus() {
+  try {
+    const res = await api('checkRakumartServer', {});
+    const online = !!res.online;
+    if (online !== _rakumartOnline) {
+      _rakumartOnline = online;
+      updateRakumartIndicator(online);
+    }
+  } catch(_) {
+    if (_rakumartOnline !== false) {
+      _rakumartOnline = false;
+      updateRakumartIndicator(false);
+    }
+  }
+}
+
+async function startRakumartFromIndicator() {
+  const label = document.getElementById('rakumart-indicator-label');
+  if (label) { label.textContent = 'ラクマート 起動中...'; label.style.color = '#fbbc04'; }
+  try {
+    await api('startRakumartServer', {});
+    // 起動後2秒待ってから再確認
+    await new Promise(r => setTimeout(r, 2000));
+    await checkRakumartStatus();
+  } catch(e) {
+    updateRakumartIndicator(false);
+    showToast('ラクマートサーバー起動に失敗しました: ' + e.message);
+  }
+}
+
+// 起動時チェック → 以降30秒ごとに自動ポーリング
+checkRakumartStatus();
+_rakumartPollTimer = setInterval(checkRakumartStatus, 30000);
+
+// =============================================
+// 仕入れフォーム用 商品マスタ連動
+// =============================================
+function loadProductsForPurchase() {
+  api('getProducts')
+    .then(products => {
+      const sel = document.getElementById('p-product-select');
+      const warning = document.getElementById('p-product-warning');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">-- 商品マスタから選択 --</option>';
+      if (!products || !products.length) {
+        warning.style.display = 'block';
+        return;
+      }
+      warning.style.display = 'none';
+      products.forEach(p => {
+        const opt = document.createElement('option');
+        const label = p['商品名'] + (p['SKU'] ? ' (' + p['SKU'] + ')' : '');
+        opt.value = [p['商品名'], p['SKU'] || '', p['仕入れ先'] || '', p['標準仕入れ単価'] || '', p['画像URL'] || ''].join('||');
+        opt.textContent = label;
+        if (current && opt.value.startsWith(current.split('||')[0])) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    })
+    .catch(() => {});
+}
+
+// 販売フォーム用商品セレクト読み込み
+let _saleProducts = [];
+
+// 按分仕入れ
+let _abnPurchaseData = [];
+
+function loadProductsForSale() {
+  api('getInventory')
+    .then(inventory => {
+      // 在庫あり（stock > 0）のみ対象
+      _saleProducts = (inventory || []).filter(item => item.stock > 0);
+      const searchEl = document.getElementById('s-product-search');
+      if (searchEl) searchEl.value = '';
+      renderSaleProductSelect('');
+    })
+    .catch(() => {});
+}
+
+function filterSaleProducts() {
+  const q = document.getElementById('s-product-search').value;
+  renderSaleProductSelect(q);
+}
+
+function renderSaleProductSelect(query) {
+  const sel = document.getElementById('s-product-select');
+  if (!sel) return;
+  const q = (query || '').toLowerCase();
+  const list = q
+    ? _saleProducts.filter(p => String(p.sku || '').toLowerCase().includes(q) || String(p.name || '').toLowerCase().includes(q))
+    : _saleProducts;
+  sel.innerHTML = '<option value="">-- 在庫商品から選択（任意）--</option>';
+  list.forEach(p => {
+    const opt = document.createElement('option');
+    const label = p.name + (p.sku ? ' (' + p.sku + ')' : '') + ' [在庫:' + p.stock + ']';
+    opt.value = [p.name, p.sku || '', '', p.avgCost || '', p.imageUrl || ''].join('||');
+    opt.textContent = label;
+    sel.appendChild(opt);
+  });
+}
+
+function onPurchaseProductSelect(sel) {
+  const val = sel.value;
+  if (!val) {
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-sku').value = '';
+    setProductImagePreview('p-img-preview', '');
+    return;
+  }
+  const parts = val.split('||');
+  document.getElementById('p-name').value = parts[0] || '';
+  document.getElementById('p-sku').value = parts[1] || '';
+  if (parts[2]) document.getElementById('p-supplier').value = parts[2];
+  if (parts[3] && !document.getElementById('p-unitcost').value) {
+    document.getElementById('p-unitcost').value = parts[3];
+    calcPurchaseTotal();
+  }
+  setProductImagePreview('p-img-preview', parts[4] || '');
+}
+
+// 商品選択時に販売フォームにも画像を反映
+// 販売フォームの原価を保持
+let _saleCostPrice = 0;
+
+function onSaleProductSelect(sel) {
+  const val = sel.value;
+  if (!val) {
+    setProductImagePreview('s-img-preview', '');
+    _saleCostPrice = 0;
+    document.getElementById('s-cost-display').textContent = '-';
+    calcSaleTotal();
+    return;
+  }
+  const parts = val.split('||');
+  // parts[0]=名前, parts[1]=SKU, parts[2]=未使用, parts[3]=avgCost, parts[4]=画像URL
+  document.getElementById('s-name').value = parts[0] || '';
+  document.getElementById('s-sku').value = parts[1] || '';
+  setProductImagePreview('s-img-preview', parts[4] || '');
+
+  // 原価を保存して表示（移動平均原価）
+  _saleCostPrice = Math.round(parseFloat(parts[3]) || 0);
+  document.getElementById('s-cost-display').textContent = _saleCostPrice > 0
+    ? '¥' + _saleCostPrice.toLocaleString()
+    : '-';
+
+  calcSaleTotal();
+}
+
+function setProductImagePreview(elId, imgUrl) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (imgUrl) {
+    el.innerHTML = `<img src="${imgUrl}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd;margin-top:4px;" onerror="this.parentElement.innerHTML=''">`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// =============================================
+// 画像ユーティリティ
+// =============================================
+function getThumbnailUrl(imageUrl) {
+  // メイン画像URLからサムネイルURLを生成
+  if (!imageUrl || !imageUrl.startsWith('/static/images/')) return imageUrl;
+  return imageUrl.replace('_main.jpg', '_thumb.jpg');
+}
+
+function getImageForDisplay(imageUrl, isThumbnail = true) {
+  // 表示用の画像URLを取得（リスト=thumbnail、モーダル=main）
+  if (!imageUrl) return '';
+  if (isThumbnail && imageUrl.startsWith('/static/images/')) {
+    return getThumbnailUrl(imageUrl);
+  }
+  return imageUrl;
+}
+
+// =============================================
+// ダッシュボード
+// =============================================
+let chartRevenue = null;
+let chartChannel = null;
+
+let _dashboardPeriod = 'month';
+
+function loadDashboard(period = 'month') {
+  _dashboardPeriod = period;
+  document.getElementById('dashboard-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  api('getDashboardData', {period})
+    .then(renderDashboard)
+    .catch(err => {
+      document.getElementById('dashboard-content').innerHTML =
+        `<div class="alert alert-danger" style="margin:16px;">❌ 読み込みエラー: ${err.message}<br>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadDashboard('${period}')">🔄 再試行</button></div>`;
+    });
+}
+
+function renderDashboard(d) {
+  const fmtYen = v => '¥' + Math.abs(v).toLocaleString();
+  const sign = v => v >= 0 ? '+' : '-';
+
+  // プルダウン値を同期
+  const periodSel = document.getElementById('dashboard-period');
+  if (periodSel) periodSel.value = _dashboardPeriod;
+
+  // 期間選択プルダウン
+  let html = `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <label style="font-size:13px; font-weight:600; color:#555;">📅 集計期間:</label>
+        <select id="dashboard-period" class="form-control" style="width:180px; font-size:13px;" onchange="loadDashboard(this.value)">
+          <option value="month" ${_dashboardPeriod === 'month' ? 'selected' : ''}>今月</option>
+          <option value="3m" ${_dashboardPeriod === '3m' ? 'selected' : ''}>過去3ヶ月</option>
+          <option value="6m" ${_dashboardPeriod === '6m' ? 'selected' : ''}>過去6ヶ月</option>
+          <option value="1y" ${_dashboardPeriod === '1y' ? 'selected' : ''}>過去1年</option>
+          <option value="all" ${_dashboardPeriod === 'all' ? 'selected' : ''}>全期間</option>
+        </select>
+      </div>
+      <div id="dashboard-period-display" style="font-size:12px; color:#999; padding-left:140px;">${d.periodStart ?? '-'} ～ ${d.periodEnd ?? '-'}</div>
+    </div>
+  `;
+
+  html += `
+    <div class="kpi-grid">
+      <div class="kpi-card ${d.monthRevenue > 0 ? '' : 'warning'}">
+        <div class="kpi-icon">💴</div>
+        <div class="kpi-label">当月 純売上</div>
+        <div class="kpi-value">${fmtYen(d.monthRevenue)}</div>
+        <div class="kpi-sub">${d.monthSalesCount} 個販売</div>
+      </div>
+      <div class="kpi-card ${d.monthProfit >= 0 ? 'success' : 'danger'}">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-label">当月 利益</div>
+        <div class="kpi-value ${d.monthProfit >= 0 ? 'num-positive' : 'num-negative'}">${sign(d.monthProfit)}${fmtYen(d.monthProfit)}</div>
+        <div class="kpi-sub">利益率 ${d.profitMargin}%</div>
+      </div>
+      <div class="kpi-card warning">
+        <div class="kpi-icon">🛒</div>
+        <div class="kpi-label">当月 仕入れ</div>
+        <div class="kpi-value">${fmtYen(d.monthCost)}</div>
+        <div class="kpi-sub">仕入れコスト</div>
+      </div>
+      <div class="kpi-card ${d.lowStockCount > 0 ? 'danger' : ''}">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-label">在庫アラート</div>
+        <div class="kpi-value ${d.lowStockCount > 0 ? 'num-negative' : ''}">${d.lowStockCount} 品目</div>
+        <div class="kpi-sub">全${d.totalProducts}商品</div>
+      </div>
+    </div>
+  `;
+
+
+  // グラフ行
+  html += `<div class="grid-2">`;
+
+  // 月別グラフ
+  html += `
+    <div class="card">
+      <div class="card-title">📊 月別 売上・利益推移（過去6ヶ月）</div>
+      <div class="chart-container"><canvas id="chart-monthly"></canvas></div>
+    </div>
+  `;
+
+  // チャネル別
+  const channelKeys = Object.keys(d.channelData);
+  if (channelKeys.length > 0) {
+    html += `
+      <div class="card">
+        <div class="card-title">🏪 当月 チャネル別売上</div>
+        <div class="chart-container"><canvas id="chart-channel"></canvas></div>
+      </div>
+    `;
+  } else {
+    html += `<div class="card"><div class="card-title">🏪 当月 チャネル別売上</div><div class="empty-state"><div class="icon">📊</div>データなし</div></div>`;
+  }
+
+  html += `</div>`;
+
+  // 商品別利益ランキング
+  if (d.productRanking.length > 0) {
+    html += `
+      <div class="card">
+        <div class="card-title">🏆 商品別 利益ランキング（全期間）</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>商品名</th><th>販売数</th><th>純売上</th><th>原価合計</th><th>利益</th><th>利益率</th></tr></thead>
+            <tbody>
+              ${d.productRanking.map((p, i) => {
+                const margin = p.revenue > 0 ? Math.round(p.profit/p.revenue*100) : 0;
+                return `<tr>
+                  <td><strong>${i+1}</strong></td>
+                  <td>${p.name}</td>
+                  <td>${p.qty}個</td>
+                  <td>${fmtYen(p.revenue)}</td>
+                  <td>${fmtYen(p.cost)}</td>
+                  <td class="${p.profit >= 0 ? 'num-positive' : 'num-negative'}">${sign(p.profit)}${fmtYen(p.profit)}</td>
+                  <td><span class="badge-tag ${margin >= 30 ? 'badge-green' : margin >= 15 ? 'badge-yellow' : 'badge-red'}">${margin}%</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // 最近の販売
+  if (d.recentSales && d.recentSales.length > 0) {
+    html += `
+      <div class="card">
+        <div class="card-title">🕒 最近の販売</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日付</th><th>商品名</th><th>チャネル</th><th>売価</th><th>純売上</th></tr></thead>
+            <tbody>
+              ${d.recentSales.map(s => `<tr>
+                <td>${s['販売日']}</td>
+                <td>${s['商品名']}</td>
+                <td><span class="badge-tag badge-blue">${s['販売チャネル']}</span></td>
+                <td>¥${Number(s['売価']).toLocaleString()}×${s['数量']}</td>
+                <td class="num-positive">¥${Number(s['純売上']).toLocaleString()}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  document.getElementById('dashboard-content').innerHTML = html;
+
+  // グラフ描画
+  setTimeout(() => {
+    // 月別グラフ
+    const ctx1 = document.getElementById('chart-monthly');
+    if (ctx1) {
+      if (chartRevenue) chartRevenue.destroy();
+      chartRevenue = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: d.monthlyData.map(m => m.label),
+          datasets: [
+            { label: '純売上', data: d.monthlyData.map(m => m.revenue), backgroundColor: 'rgba(74,134,232,0.7)', borderRadius: 4 },
+            { label: '利益', data: d.monthlyData.map(m => m.profit), backgroundColor: 'rgba(52,168,83,0.7)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => '¥'+v.toLocaleString() } } }
+        }
+      });
+    }
+
+    // チャネル別
+    const ctx2 = document.getElementById('chart-channel');
+    if (ctx2 && channelKeys.length > 0) {
+      if (chartChannel) chartChannel.destroy();
+      const colors = ['#4a86e8','#34a853','#fbbc04','#ea4335','#9c27b0','#00bcd4','#ff5722'];
+      chartChannel = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: channelKeys,
+          datasets: [{ data: channelKeys.map(k => Math.round(d.channelData[k])), backgroundColor: colors }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: ctx => `¥${ctx.raw.toLocaleString()}` } } }
+        }
+      });
+    }
+  }, 100);
+}
+
+// =============================================
+// 仕入れ
+// =============================================
+document.getElementById('p-unitcost').addEventListener('input', calcPurchaseTotal);
+document.getElementById('p-qty').addEventListener('input', calcPurchaseTotal);
+
+function calcPurchaseTotal() {
+  const unit = parseFloat(document.getElementById('p-unitcost').value) || 0;
+  const qty = parseInt(document.getElementById('p-qty').value) || 0;
+  document.getElementById('p-total').value = unit && qty ? '¥' + (unit * qty).toLocaleString() : '';
+}
+
+function submitPurchase(e) {
+  e.preventDefault();
+  const btn = document.getElementById('p-submit');
+  btn.disabled = true; btn.textContent = '登録中...';
+
+  const data = {
+    date: document.getElementById('p-date').value,
+    productName: document.getElementById('p-name').value,
+    sku: document.getElementById('p-sku').value,
+    supplier: document.getElementById('p-supplier').value,
+    unitCost: document.getElementById('p-unitcost').value,
+    quantity: document.getElementById('p-qty').value,
+    shipping: document.getElementById('p-shipping').value,
+    salePrice: document.getElementById('p-saleprice').value,
+    memo: document.getElementById('p-memo').value
+  };
+
+  api('addPurchase', data)
+    .then(() => {
+      showAlert('purchase-alert', 'success', '✅ 仕入れを登録しました！');
+      document.getElementById('purchaseForm').reset();
+      document.getElementById('p-date').value = today();
+      document.getElementById('p-total').value = '';
+      btn.disabled = false; btn.textContent = '📥 仕入れを登録する';
+      loadRecentPurchases();
+      invalidateInventory();
+    })
+    .catch(err => {
+      showAlert('purchase-alert', 'danger', '❌ エラー: ' + err.message);
+      btn.disabled = false; btn.textContent = '📥 仕入れを登録する';
+    });
+}
+
+function loadRecentPurchases() {
+  api('getPurchases', {limit: 10})
+    .then(purchases => {
+      if (!purchases.length) {
+        document.getElementById('recent-purchases').innerHTML = '<div class="empty-state"><div class="icon">📋</div>仕入れデータなし</div>';
+        return;
+      }
+      let html = '<div class="table-wrap"><table><thead><tr><th>日付</th><th>商品名</th><th>単価</th><th>数量</th><th>合計</th></tr></thead><tbody>';
+      purchases.forEach(p => {
+        html += `<tr>
+          <td>${p['仕入れ日']}</td>
+          <td>${p['商品名']}</td>
+          <td>¥${Number(p['仕入れ単価']).toLocaleString()}</td>
+          <td>${p['数量']}個</td>
+          <td>¥${Number(p['合計金額']).toLocaleString()}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('recent-purchases').innerHTML = html;
+    });
+}
+
+// =============================================
+// 販売
+// =============================================
+['s-price','s-qty','s-fee-rate','s-shipping'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calcSaleTotal);
+  document.getElementById(id).addEventListener('change', calcSaleTotal);
+});
+
+const CHANNEL_FEE_MAP = {
+  'メルカリ': '10',
+  'メルカリShops': '10',
+  'Amazon': '15',
+  '楽天': '8.5',
+  'Yahoo!ショッピング': '8',
+  'BASE': '3',
+  'BOOTH': '5.6',
+  '自社EC': '0',
+  'その他': '0'
+};
+function onChannelChange() {
+  const ch = document.getElementById('s-channel').value;
+  const feeEl = document.getElementById('s-fee-rate');
+  if (ch && CHANNEL_FEE_MAP[ch] !== undefined) {
+    feeEl.value = CHANNEL_FEE_MAP[ch];
+  }
+  calcSaleTotal();
+}
+
+function calcSaleTotal() {
+  const price = parseFloat(document.getElementById('s-price').value) || 0;
+  const qty = parseInt(document.getElementById('s-qty').value) || 0;
+  const feeRate = parseFloat(document.getElementById('s-fee-rate').value) || 0;
+  const shipping = parseFloat(document.getElementById('s-shipping').value) || 0;
+
+  const amountEl    = document.getElementById('s-gross-profit-amount');
+  const rateEl      = document.getElementById('s-gross-profit-rate');
+
+  if (price && qty) {
+    const fee = Math.round(price * qty * feeRate / 100);
+    const net = price * qty - fee - shipping;
+    document.getElementById('s-net').value = '¥' + net.toLocaleString() + ` (手数料¥${fee.toLocaleString()})`;
+
+    // 粗利 = 純売上 - (原価 × 数量)
+    if (_saleCostPrice > 0) {
+      const grossProfit = net - _saleCostPrice * qty;
+      const rate = Math.round((grossProfit / (price * qty)) * 1000) / 10; // 小数第1位
+
+      amountEl.style.color = grossProfit >= 0 ? '#28a745' : '#dc3545';
+      amountEl.textContent  = (grossProfit >= 0 ? '+' : '') + '¥' + Math.abs(grossProfit).toLocaleString();
+      rateEl.textContent    = `(${grossProfit >= 0 ? '+' : ''}${rate}%)`;
+    } else {
+      amountEl.style.color = '#999';
+      amountEl.textContent = '-';
+      rateEl.textContent   = '-';
+    }
+  } else {
+    document.getElementById('s-net').value = '';
+    amountEl.style.color = '#999';
+    amountEl.textContent = '-';
+    rateEl.textContent   = '-';
+  }
+}
+
+function submitSale(e) {
+  e.preventDefault();
+  const btn = document.getElementById('s-submit');
+  btn.disabled = true; btn.textContent = '登録中...';
+
+  const data = {
+    date: document.getElementById('s-date').value,
+    productName: document.getElementById('s-name').value,
+    sku: document.getElementById('s-sku').value,
+    channel: document.getElementById('s-channel').value,
+    price: document.getElementById('s-price').value,
+    quantity: document.getElementById('s-qty').value,
+    feeRate: document.getElementById('s-fee-rate').value,
+    shippingCost: document.getElementById('s-shipping').value,
+    memo: document.getElementById('s-memo').value
+  };
+
+  api('addSale', data)
+    .then(() => {
+      showAlert('sale-alert', 'success', '✅ 販売を登録しました！');
+      document.getElementById('saleForm').reset();
+      document.getElementById('s-date').value = today();
+      document.getElementById('s-net').value = '';
+      // 原価・粗利表示のリセット（form.reset()ではDIV/スパンはリセットされない）
+      _saleCostPrice = 0;
+      document.getElementById('s-cost-display').textContent = '-';
+      const _amt = document.getElementById('s-gross-profit-amount');
+      const _rat = document.getElementById('s-gross-profit-rate');
+      _amt.textContent = '-'; _amt.style.color = '#999';
+      _rat.textContent = '-';
+      setProductImagePreview('s-img-preview', '');
+      btn.disabled = false; btn.textContent = '📤 販売を登録する';
+      loadRecentSales();
+      invalidateInventory();
+    })
+    .catch(err => {
+      showAlert('sale-alert', 'danger', '❌ エラー: ' + err.message);
+      btn.disabled = false; btn.textContent = '📤 販売を登録する';
+    });
+}
+
+function loadRecentSales() {
+  api('getSales', {limit: 10})
+    .then(sales => {
+      if (!sales.length) {
+        document.getElementById('recent-sales').innerHTML = '<div class="empty-state"><div class="icon">📋</div>販売データなし</div>';
+        return;
+      }
+      let html = '<div class="table-wrap"><table><thead><tr><th>日付</th><th>商品名</th><th>チャネル</th><th>売価(円)</th><th>数量</th><th>純売上</th><th></th></tr></thead><tbody>';
+      sales.forEach(s => {
+        const id = String(s['販売ID'] || '');
+        html += `<tr>
+          <td>${s['販売日']}</td>
+          <td>${s['商品名']}</td>
+          <td><span class="badge-tag badge-blue">${s['販売チャネル']}</span></td>
+          <td><input type="number" class="sale-inline-input" data-id="${id}" data-field="price" value="${Number(s['売価'])}" min="0" style="width:80px;" onchange="saveSaleInline(this,'${id}')"></td>
+          <td><input type="number" class="sale-inline-input" data-id="${id}" data-field="qty" value="${Number(s['数量'])}" min="1" style="width:55px;" onchange="saveSaleInline(this,'${id}')"></td>
+          <td class="num-positive" id="sale-net-${id}">¥${Number(s['純売上']).toLocaleString()}</td>
+          <td><button class="btn btn-sm" style="padding:2px 8px;font-size:12px;background:#fce8e6;color:#c62828;border:1px solid #f5c6c6;" onclick="deleteSaleRecord('${id}')">🗑️</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('recent-sales').innerHTML = html;
+    });
+}
+
+function saveSaleInline(input, saleId) {
+  const row = input.closest('tr');
+  const priceInput = row.querySelector('[data-field="price"]');
+  const qtyInput   = row.querySelector('[data-field="qty"]');
+  const price = parseFloat(priceInput.value) || 0;
+  const qty   = parseInt(qtyInput.value) || 1;
+  input.style.borderColor = '#fbbc04';
+  api('updateSale', { saleId, salePrice: price, quantity: qty })
+    .then(() => {
+      // 純売上を再計算して表示更新（手数料率・送料はサーバー側で保持）
+      api('getSales', { limit: 50 }).then(sales => {
+        const s = sales.find(x => String(x['販売ID']) === saleId);
+        if (s) {
+          const netEl = document.getElementById('sale-net-' + saleId);
+          if (netEl) netEl.textContent = '¥' + Number(s['純売上']).toLocaleString();
+        }
+      });
+      input.style.borderColor = '#34a853';
+      setTimeout(() => input.style.borderColor = '', 1500);
+      invalidateInventory();
+    })
+    .catch(err => {
+      input.style.borderColor = '#ea4335';
+      showToast('更新エラー: ' + err.message);
+    });
+}
+
+function openSaleEditModal(s) {
+  document.getElementById('edit-sale-id').value       = s['販売ID'] || '';
+  document.getElementById('edit-s-date').value        = s['販売日'] || '';
+  document.getElementById('edit-s-name').value        = s['商品名'] || '';
+  document.getElementById('edit-s-sku').value         = s['SKU'] || '';
+  document.getElementById('edit-s-channel').value     = s['販売チャネル'] || '';
+  document.getElementById('edit-s-price').value       = s['売価'] || 0;
+  document.getElementById('edit-s-qty').value         = s['数量'] || 1;
+  document.getElementById('edit-s-fee-rate').value    = s['手数料率'] || 0;
+  document.getElementById('edit-s-shipping').value    = s['送料負担'] || 0;
+  document.getElementById('edit-s-memo').value        = s['備考'] || '';
+  calcEditSaleNet();
+  const modal = document.getElementById('sale-edit-modal');
+  modal.style.display = 'flex';
+}
+
+function closeSaleEditModal() {
+  document.getElementById('sale-edit-modal').style.display = 'none';
+}
+
+function calcEditSaleNet() {
+  const price    = parseFloat(document.getElementById('edit-s-price').value) || 0;
+  const qty      = parseInt(document.getElementById('edit-s-qty').value) || 0;
+  const feeRate  = parseFloat(document.getElementById('edit-s-fee-rate').value) || 0;
+  const shipping = parseFloat(document.getElementById('edit-s-shipping').value) || 0;
+  if (price && qty) {
+    const fee = Math.round(price * qty * feeRate / 100);
+    const net = price * qty - fee - shipping;
+    document.getElementById('edit-s-net').value = '¥' + net.toLocaleString() + ` (手数料¥${fee.toLocaleString()})`;
+  } else {
+    document.getElementById('edit-s-net').value = '';
+  }
+}
+
+function saveSaleEdit() {
+  const saleId = document.getElementById('edit-sale-id').value;
+  if (!saleId) { showToast('販売IDが取得できません'); return; }
+  const data = {
+    saleId,
+    date:            document.getElementById('edit-s-date').value,
+    productName:     document.getElementById('edit-s-name').value,
+    sku:             document.getElementById('edit-s-sku').value,
+    channel:         document.getElementById('edit-s-channel').value,
+    salePrice:       document.getElementById('edit-s-price').value,
+    quantity:        document.getElementById('edit-s-qty').value,
+    feeRate:         document.getElementById('edit-s-fee-rate').value,
+    shippingBurden:  document.getElementById('edit-s-shipping').value,
+    memo:            document.getElementById('edit-s-memo').value,
+  };
+  api('updateSale', data)
+    .then(() => {
+      closeSaleEditModal();
+      loadRecentSales();
+      invalidateInventory();
+    })
+    .catch(err => showToast('更新エラー: ' + err.message));
+}
+
+function deleteSaleRecord(saleId) {
+  if (!saleId) { showToast('販売IDが取得できません'); return; }
+  if (!confirm('この販売データを削除しますか？')) return;
+  api('deleteSale', { saleId })
+    .then(() => {
+      loadRecentSales();
+      invalidateInventory();
+    })
+    .catch(err => showToast('削除エラー: ' + err.message));
+}
+
+// =============================================
+// 在庫
+// =============================================
+function loadLowStockThreshold() {
+  api('getConfig')
+    .then(cfg => {
+      const el = document.getElementById('low-stock-threshold');
+      if (el && cfg.lowStockThreshold !== undefined) {
+        el.value = cfg.lowStockThreshold;
+      }
+    })
+    .catch(() => {});
+}
+
+function saveLowStockThreshold() {
+  const el = document.getElementById('low-stock-threshold');
+  const val = parseInt(el.value);
+  if (isNaN(val) || val < 0) { el.value = 3; return; }
+  api('saveConfig', { lowStockThreshold: val })
+    .then(() => loadInventory())
+    .catch(err => showToast('設定の保存に失敗しました: ' + err.message));
+}
+
+function loadInventory() {
+  document.getElementById('inventory-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  api('getInventory')
+    .then(inventory => {
+      try {
+      if (!inventory || !inventory.length) {
+        document.getElementById('inventory-content').innerHTML = '<div class="empty-state"><div class="icon">📦</div>在庫データなし<br>仕入れを登録してください</div>';
+        return;
+      }
+      // 一括削除バー（チェック時に表示）
+      let html = `<div id="inv-bulk-bar" style="display:none;padding:10px 16px;background:#fff3cd;border-bottom:1px solid #ffc107;align-items:center;gap:12px;">
+        <span id="inv-sel-count" style="font-weight:600;color:#856404;"></span>
+        <button onclick="bulkDeleteProducts()" style="background:#e53935;color:white;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:13px;">🗑️ まとめて削除</button>
+        <button onclick="clearInventorySelection()" style="background:none;border:1px solid #999;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:13px;">✕ 選択解除</button>
+      </div>`;
+
+      const invSortCols = [
+        { key:'name',      label:'商品名' },
+        { key:'sku',       label:'SKU' },
+        { key:'purchased', label:'仕入れ累計' },
+        { key:'sold',      label:'販売累計' },
+        { key:'stock',     label:'在庫数' },
+        { key:'avgcost',   label:'平均仕入原価' },
+        { key:'evalval',   label:'在庫評価額' },
+        { key:'stock',     label:'状態' },
+      ];
+      html += '<div class="table-wrap"><table><thead><tr>';
+      html += `<th style="width:36px;text-align:center;"><input type="checkbox" id="inv-check-all" onchange="toggleAllInventory(this)" title="全選択/解除"></th>`;
+      html += '<th>画像</th>';
+      invSortCols.forEach((c, i) => {
+        const isDefault = c.key === 'stock' && i === 4;
+        html += `<th class="inv-sort-th" data-sortkey="${c.key}" onclick="sortInventoryTable('${c.key}',this)">${c.label}<span class="inv-sort-icon">${isDefault ? '▲' : '⇅'}</span></th>`;
+      });
+      html += '<th></th></tr></thead><tbody>';
+
+      inventory.sort((a,b) => a.stock - b.stock).forEach(item => {
+        const stockClass = item.stock <= 0 ? 'stock-out' : item.alert ? 'stock-low' : 'stock-ok';
+        const stockLabel = item.stock <= 0 ? '⛔ 在庫切れ' : item.alert ? `⚠️ 残り${item.stock}個` : `✅ ${item.stock}個`;
+        const evalValue = item.stock * item.avgCost;
+        const thumbUrl = getImageForDisplay(item.imageUrl, true);
+        const mainUrl  = item.imageUrl;
+        const imgHtml = mainUrl
+          ? `<img src="${String(thumbUrl).replace(/"/g,'&quot;')}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;" onclick="showImageModal('${String(mainUrl).replace(/"/g,'&quot;')}', '${String(item.name||'').replace(/"/g,'&quot;')}')" onerror="this.style.display='none'" title="${String(item.name||'').replace(/"/g,'&quot;')}">`
+          : `<div style="width:80px;height:80px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid #eee;">📦</div>`;
+        const productKey = String(item.sku || item.name || '');
+        const productName = String(item.name || '');
+        html += `<tr id="inv-row-${productKey}"
+          data-name="${String(item.name||'').replace(/"/g,'&quot;')}"
+          data-sku="${String(item.sku||'').replace(/"/g,'&quot;')}"
+          data-purchased="${item.totalPurchased}"
+          data-sold="${item.totalSold}"
+          data-stock="${item.stock}"
+          data-avgcost="${item.avgCost||0}"
+          data-evalval="${evalValue}">
+          <td style="text-align:center;"><input type="checkbox" class="inv-check" data-key="${productKey.replace(/"/g,'&quot;')}" data-name="${productName.replace(/"/g,'&quot;')}" onchange="updateInventorySelection()"></td>
+          <td style="text-align:center;">${imgHtml}</td>
+          <td><strong>${item.name || ''}</strong></td>
+          <td>${item.sku || '-'}</td>
+          <td>${item.totalPurchased}個</td>
+          <td>${item.totalSold}個</td>
+          <td class="${stockClass}"><input type="number" class="stock-input" data-sku="${String(item.sku||'').replace(/"/g,'&quot;')}" value="${item.stock}" min="0" style="width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:14px;"></td>
+          <td>¥${(item.avgCost || 0).toLocaleString()}</td>
+          <td>¥${evalValue.toLocaleString()}</td>
+          <td class="${stockClass}">${stockLabel}</td>
+          <td style="text-align:center;">
+            <button data-key="${productKey.replace(/"/g,'&quot;')}" data-name="${productName.replace(/"/g,'&quot;')}"
+              onclick="confirmDeleteProduct(this.dataset.key, this.dataset.name)"
+              style="background:none;border:1px solid #ddd;border-radius:4px;padding:3px 8px;cursor:pointer;color:#e53935;font-size:12px;"
+              title="この商品を削除">🗑️</button>
+          </td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('inventory-content').innerHTML = html;
+
+      // 画像表示：Drive URL は直接レンダリング、遅延読み込み不要
+      // （フロントエンド側で src に直接 Drive URL を設定）
+
+      // 在庫編集リスナーを自動バインド
+      attachStockInputListeners();
+      } catch(e) {
+        document.getElementById('inventory-content').innerHTML = `<div class="alert alert-danger" style="margin:16px;">❌ 表示エラー: ${e.message}<br><small>${e.stack||''}</small></div>`;
+      }
+    })
+    .catch(err => {
+      document.getElementById('inventory-content').innerHTML =
+        `<div class="alert alert-danger" style="margin:16px;">❌ 読み込みエラー: ${err.message}<br>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadInventory()">🔄 再試行</button></div>`;
+    });
+}
+
+let _invSortState = { key: 'stock', dir: 1 };
+function sortInventoryTable(key, thEl) {
+  const tbody = document.querySelector('#inventory-content table tbody');
+  if (!tbody) return;
+  if (_invSortState.key === key) {
+    _invSortState.dir *= -1;
+  } else {
+    _invSortState.key = key;
+    _invSortState.dir = 1;
+  }
+  document.querySelectorAll('#inventory-content .inv-sort-th').forEach(th => {
+    const icon = th.querySelector('.inv-sort-icon');
+    if (!icon) return;
+    if (th.dataset.sortkey === key) {
+      icon.textContent = _invSortState.dir === 1 ? '▲' : '▼';
+      th.style.color = 'var(--primary)';
+    } else {
+      icon.textContent = '⇅';
+      th.style.color = '';
+    }
+  });
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  rows.sort((a, b) => {
+    const av = a.dataset[key] || '';
+    const bv = b.dataset[key] || '';
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return (an - bn) * _invSortState.dir;
+    return av.localeCompare(bv, 'ja') * _invSortState.dir;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function toggleAllInventory(checkbox) {
+  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = checkbox.checked);
+  updateInventorySelection();
+}
+function updateInventorySelection() {
+  const checked = document.querySelectorAll('.inv-check:checked');
+  const bar = document.getElementById('inv-bulk-bar');
+  const allCb = document.getElementById('inv-check-all');
+  const total = document.querySelectorAll('.inv-check').length;
+  if (bar) {
+    bar.style.display = checked.length > 0 ? 'flex' : 'none';
+    document.getElementById('inv-sel-count').textContent = `${checked.length}件選択中`;
+  }
+  if (allCb) {
+    allCb.checked = checked.length === total && total > 0;
+    allCb.indeterminate = checked.length > 0 && checked.length < total;
+  }
+}
+function clearInventorySelection() {
+  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = false);
+  updateInventorySelection();
+}
+function bulkDeleteProducts() {
+  const checked = Array.from(document.querySelectorAll('.inv-check:checked'));
+  if (!checked.length) return;
+  const names = checked.map(cb => cb.dataset.name).join('、');
+  if (!confirm(`以下の${checked.length}件を削除しますか？\n\n${names}\n\n仕入れ・販売記録も含めて完全に削除されます。\nこの操作は元に戻せません。`)) return;
+  const keys = checked.map(cb => cb.dataset.key);
+  const rows = checked.map(cb => cb.closest('tr')).filter(r => r);
+  rows.forEach(row => { row.style.opacity = '0.3'; row.style.transition = 'opacity 0.3s'; });
+  api('deleteProductsBulk', keys)
+    .then(r => {
+      rows.forEach(row => row.remove());
+      const bar = document.getElementById('inv-bulk-bar');
+      if (bar) bar.style.display = 'none';
+      tabLoaded['dashboard'] = false;
+      tabLoaded['report'] = false;
+    })
+    .catch(err => {
+      rows.forEach(row => { row.style.opacity = '1'; });
+      showToast('削除に失敗しました: ' + err.message);
+    });
+}
+
+function confirmDeleteProduct(productKey, productName) {
+  if (!confirm(`「${productName}」を削除しますか？\n\n仕入れ・販売記録も含めて完全に削除されます。\nこの操作は元に戻せません。`)) return;
+  const row = document.getElementById('inv-row-' + productKey);
+  if (row) { row.style.opacity = '0.3'; row.style.transition = 'opacity 0.3s'; }
+  api('deleteProductAll', {productKey: productKey})
+    .then(r => {
+      if (row) row.remove();
+      tabLoaded['dashboard'] = false;
+      tabLoaded['report'] = false;
+    })
+    .catch(err => {
+      if (row) row.style.opacity = '1';
+      showToast('削除に失敗しました: ' + err.message);
+    });
+}
+
+// =============================================
+// 利益レポート
+// =============================================
+let _reportMode = 'monthly';
+
+function loadReport() {
+  // デフォルト期間：今日〜30日前をセット
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0,10);
+  const d30 = new Date(today); d30.setDate(today.getDate()-29);
+  const startEl = document.getElementById('report-start');
+  const endEl   = document.getElementById('report-end');
+  if (startEl && !startEl.value) startEl.value = fmt(d30);
+  if (endEl   && !endEl.value)   endEl.value   = fmt(today);
+  applyReportFilter();
+}
+
+function setReportMode(mode) {
+  _reportMode = mode;
+  // ボタン状態切り替え
+  ['monthly','weekly','daily','range'].forEach(m => {
+    const btn = document.getElementById('rbtn-'+m);
+    if (btn) { btn.className = 'btn btn-sm ' + (m === mode ? 'btn-primary' : 'btn-outline'); }
+  });
+  // UI 切り替え
+  const countWrap = document.getElementById('report-count-wrap');
+  const rangeWrap = document.getElementById('report-range-wrap');
+  if (mode === 'range') {
+    countWrap.style.display = 'none';
+    rangeWrap.style.display = 'flex';
+  } else {
+    countWrap.style.display = 'flex';
+    rangeWrap.style.display = 'none';
+    // 件数のデフォルト調整
+    const sel = document.getElementById('report-count');
+    if (mode === 'weekly' && sel.value === '6') sel.value = '12';
+    if (mode === 'daily'  && sel.value === '6') sel.value = '14';
+    applyReportFilter();
+  }
+}
+
+function applyReportFilter() {
+  const content = document.getElementById('report-content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  const count = parseInt((document.getElementById('report-count') || {}).value || 6);
+  const start = (document.getElementById('report-start') || {}).value || '';
+  const end   = (document.getElementById('report-end')   || {}).value || '';
+
+  api('getProfitReport', { mode: _reportMode, count, startDate: start, endDate: end })
+    .then(renderReport)
+    .catch(err => {
+      content.innerHTML =
+        `<div class="alert alert-danger">❌ 読み込みエラー: ${err.message}<br>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="applyReportFilter()">🔄 再試行</button></div>`;
+    });
+}
+
+function renderReport(d) {
+  const fmtYen = v => '¥' + Math.abs(v).toLocaleString();
+  const sign   = v => v >= 0 ? '+' : '-';
+  const modeLabels = { monthly:'月別', weekly:'週別', daily:'日別', range:'期間指定' };
+  const colLabel   = { monthly:'月', weekly:'週', daily:'日付', range:'期間' };
+
+  let html = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 ${modeLabels[d.mode] || ''}サマリー</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>${colLabel[d.mode]||'期間'}</th>
+              <th>販売数</th><th>純売上</th><th>利益</th><th>利益率</th>
+            </tr></thead>
+            <tbody>
+              ${d.summaryData.map(m => {
+                const margin = m.revenue > 0 ? Math.round(m.profit/m.revenue*100) : 0;
+                return `<tr>
+                  <td><strong>${m.label}</strong></td>
+                  <td>${m.salesCount}個</td>
+                  <td>${fmtYen(m.revenue)}</td>
+                  <td class="${m.profit >= 0 ? 'num-positive':'num-negative'}">${sign(m.profit)}${fmtYen(m.profit)}</td>
+                  <td><span class="badge-tag ${margin >= 30 ? 'badge-green' : margin >= 15 ? 'badge-yellow' : 'badge-red'}">${margin}%</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 ${modeLabels[d.mode] || ''}利益トレンド</div>
+        <div class="chart-container"><canvas id="chart-report"></canvas></div>
+      </div>
+    </div>
+  `;
+
+  if (d.productRanking && d.productRanking.length > 0) {
+    html += `
+      <div class="card">
+        <div class="card-title">🏆 商品別 利益ランキング（この期間）</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>商品名</th><th>販売数</th><th>純売上</th><th>原価合計</th><th>利益</th><th>利益率</th><th>判定</th></tr></thead>
+            <tbody>
+              ${d.productRanking.map((p, i) => {
+                const margin = p.revenue > 0 ? Math.round(p.profit/p.revenue*100) : 0;
+                const judge  = margin >= 30 ? '💚 優良' : margin >= 15 ? '🟡 普通' : margin >= 0 ? '🔴 要改善' : '⛔ 赤字';
+                return `<tr>
+                  <td><strong>${i+1}</strong></td>
+                  <td>${p.name}</td>
+                  <td>${p.qty}個</td>
+                  <td>${fmtYen(p.revenue)}</td>
+                  <td>${fmtYen(p.cost)}</td>
+                  <td class="${p.profit>=0?'num-positive':'num-negative'}">${sign(p.profit)}${fmtYen(p.profit)}</td>
+                  <td>${margin}%</td>
+                  <td>${judge}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  document.getElementById('report-content').innerHTML = html;
+
+  setTimeout(() => {
+    const ctx = document.getElementById('chart-report');
+    if (!ctx || d.summaryData.length === 0) return;
+    new Chart(ctx, {
+      type: d.mode === 'range' ? 'bar' : 'line',
+      data: {
+        labels: d.summaryData.map(m => m.label),
+        datasets: [
+          { label: '純売上', data: d.summaryData.map(m => m.revenue),
+            borderColor: '#4a86e8', backgroundColor: 'rgba(74,134,232,0.15)',
+            tension: 0.3, fill: true },
+          { label: '利益',   data: d.summaryData.map(m => m.profit),
+            borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.15)',
+            tension: 0.3, fill: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { ticks: { callback: v => '¥'+v.toLocaleString() } } }
+      }
+    });
+  }, 100);
+}
+
+// =============================================
+// 商品マスタ
+// =============================================
+function submitProduct(e) {
+  e.preventDefault();
+
+  // ボタン操作を無効化
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '🔄 保存中...';
+
+  const data = {
+    name: document.getElementById('prod-name').value,
+    sku: document.getElementById('prod-sku').value,
+    category: document.getElementById('prod-category').value,
+    supplier: document.getElementById('prod-supplier').value,
+    costPrice: document.getElementById('prod-cost').value,
+    memo: document.getElementById('prod-memo').value
+  };
+
+  api('addProduct', data)
+    .then(() => {
+      // フォームをクリア
+      document.getElementById('productForm').reset();
+
+      // 成功メッセージを表示
+      showAlert('product-alert', 'success', '✅ 「' + data.name + '」を登録しました！右側のリストに追加されます');
+
+      // 商品リストを再読み込み
+      loadProducts();
+      loadProductsForPurchase();
+
+      // リスト上部へスクロール
+      setTimeout(() => {
+        const productList = document.getElementById('product-list');
+        if (productList) {
+          productList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 300);
+
+      // ボタンを復元
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🏷️ 商品を登録する';
+    })
+    .catch(err => {
+      showAlert('product-alert', 'danger', '❌ 登録に失敗しました: ' + err.message);
+      // ボタンを復元
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🏷️ 商品を登録する';
+    });
+}
+
+let _allProducts = [];
+
+function loadProducts() {
+  api('getProducts')
+    .then(products => {
+      _allProducts = products || [];
+      document.getElementById('product-sku-search').value = '';
+      renderProductList('');
+    })
+    .catch(err => {
+      showAlert('product-alert', 'danger', '❌ 商品一覧の取得に失敗: ' + err.message);
+    });
+}
+
+function filterProducts() {
+  const q = document.getElementById('product-sku-search').value;
+  renderProductList(q);
+}
+
+function renderProductList(skuQuery) {
+  const q = (skuQuery || '').toLowerCase();
+  const list = q ? _allProducts.filter(p => String(p['SKU'] || '').toLowerCase().includes(q)) : _allProducts;
+  if (!list.length) {
+    document.getElementById('product-list').innerHTML = q
+      ? `<div class="empty-state"><div class="icon">🔍</div>「${skuQuery}」に一致する商品なし</div>`
+      : '<div class="empty-state"><div class="icon">🏷️</div>商品なし</div>';
+    return;
+  }
+  let html = '<div class="table-wrap"><table><thead><tr><th>画像</th><th>商品名</th><th>SKU</th><th>カテゴリ</th><th>仕入れ先</th><th>標準単価</th></tr></thead><tbody>';
+  list.forEach(p => {
+    const esc = s => String(s || '').replace(/"/g, '&quot;');
+    const id  = esc(p['商品ID'] || '');
+    const nm  = esc(p['商品名'] || '');
+    const thumbUrl = getImageForDisplay(p['画像URL'], true);
+    const mainUrl  = p['画像URL'];
+    const imgHtml = mainUrl
+      ? `<img src="${thumbUrl}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #eee;cursor:pointer;" onclick="showImageModal('${mainUrl}', '${nm}')" onerror="this.style.display='none'">`
+      : `<div style="width:44px;height:44px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid #eee;">📦</div>`;
+    html += `<tr>
+      <td style="text-align:center;">${imgHtml}</td>
+      <td><input type="text" class="master-edit-input" data-id="${id}" data-name="${nm}" data-field="商品名" value="${nm}" style="width:180px;font-weight:bold;font-size:13px;" onchange="updateMasterFieldProxy(this)"></td>
+      <td><input type="text" class="master-edit-input" data-id="${id}" data-name="${nm}" data-old="${esc(p['SKU'])}" value="${esc(p['SKU'])}" placeholder="未設定" style="width:120px;font-size:13px;" onchange="updateProductSkuProxy(this)"></td>
+      <td><input type="text" class="master-edit-input" data-id="${id}" data-name="${nm}" data-field="カテゴリ" value="${esc(p['カテゴリ'])}" style="width:100px;font-size:13px;" onchange="updateMasterFieldProxy(this)"></td>
+      <td><input type="text" class="master-edit-input" data-id="${id}" data-name="${nm}" data-field="仕入れ先" value="${esc(p['仕入れ先'])}" style="width:110px;font-size:13px;" onchange="updateMasterFieldProxy(this)"></td>
+      <td><input type="number" class="master-edit-input" data-id="${id}" data-name="${nm}" data-field="標準仕入れ単価" value="${Number(p['標準仕入れ単価'])||0}" style="width:90px;font-size:13px;" onchange="updateMasterFieldProxy(this)"></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('product-list').innerHTML = html;
+}
+
+function updateMasterFieldProxy(input) {
+  const id        = input.getAttribute('data-id') || '';
+  const origName  = input.getAttribute('data-name') || '';
+  const fieldName = input.getAttribute('data-field');
+  const newValue  = input.value;
+  input.classList.add('saving-sku');
+  input.disabled = true;
+  api('updateProductMasterField', { id, originalName: origName, fieldName, newValue })
+    .then(res => {
+      input.classList.remove('saving-sku');
+      input.disabled = false;
+      if (res && res.success) {
+        input.style.borderColor = '#4CAF50';
+        setTimeout(() => input.style.borderColor = '', 2000);
+        if (fieldName === '商品名') input.setAttribute('data-name', newValue);
+        // _allProducts も同期
+        const p = _allProducts.find(x => (id && String(x['商品ID']) === id) || x['商品名'] === origName);
+        if (p) p[fieldName] = newValue;
+      } else {
+        input.style.borderColor = '#F44336';
+        showToast('更新失敗: ' + (res ? res.error : '不明なエラー'));
+      }
+    })
+    .catch(err => {
+      input.classList.remove('saving-sku');
+      input.disabled = false;
+      input.style.borderColor = '#F44336';
+      showToast('通信エラー: ' + err.message);
+    });
+}
+
+function updateProductSkuProxy(input) {
+  const id      = input.getAttribute('data-id') || '';
+  const name    = input.getAttribute('data-name') || '';
+  const oldSku  = input.getAttribute('data-old') || '';
+  const newSku  = input.value.trim();
+  if (oldSku === newSku) return;
+  if (!confirm(`「${name}」のSKUを\n「${oldSku || '未設定'}」→「${newSku || '未設定'}」に変更しますか？\n（関連する仕入れ・販売のSKUも一括更新されます）`)) {
+    input.value = oldSku;
+    return;
+  }
+  input.classList.add('saving-sku');
+  input.disabled = true;
+  api('updateProductSku', { id, name, oldSku, newSku })
+    .then(res => {
+      input.classList.remove('saving-sku');
+      input.disabled = false;
+      if (res && res.success) {
+        input.style.borderColor = '#4CAF50';
+        setTimeout(() => input.style.borderColor = '', 2000);
+        input.setAttribute('data-old', newSku);
+        // _allProducts も同期
+        const p = _allProducts.find(x => (id && String(x['商品ID']) === id) || (x['商品名'] === name && (x['SKU']||'') === oldSku));
+        if (p) p['SKU'] = newSku;
+      } else {
+        input.style.borderColor = '#F44336';
+        showToast('更新失敗: ' + (res ? res.error : ''));
+        input.value = oldSku;
+      }
+    })
+    .catch(err => {
+      input.classList.remove('saving-sku');
+      input.disabled = false;
+      showToast('通信エラー: ' + err.message);
+      input.value = oldSku;
+    });
+}
+
+// =============================================
+// CSV一括取込
+// =============================================
+let _productBulkData = [];
+let _purchaseBulkData = [];
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return [];
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function downloadCSV(csv, filename) {
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadProductTemplate() {
+  downloadCSV(
+    '商品名,SKU,カテゴリ,仕入れ先,標準仕入れ単価,メモ\nステンレスタンブラー 500ml,TBL-001,キッチン雑貨,アリエクスプレス,800,春コレクション',
+    '商品マスタテンプレート.csv'
+  );
+}
+
+function downloadPurchaseTemplate() {
+  downloadCSV(
+    '仕入れ日,商品名,SKU,仕入れ先,仕入れ単価,数量,送料,備考\n' + today() + ',ステンレスタンブラー 500ml,TBL-001,中国サプライヤーA,800,20,2000,春コレクション先行仕入れ',
+    '仕入れテンプレート.csv'
+  );
+}
+
+function downloadProductsMaster() {
+  // _allProductsが空の場合のチェック
+  if (!_allProducts || !_allProducts.length) {
+    showAlert('product-alert', 'warning', '商品が登録されていません。');
+    return;
+  }
+
+  // ヘッダー行
+  const headers = ['商品ID', '商品名', 'SKU', 'カテゴリ', '仕入れ先', '標準仕入れ単価', '登録日', 'メモ', '画像URL'];
+
+  // CSVエスケープ関数
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  // データ行の作成
+  const rows = _allProducts.map(p => [
+    escapeCsv(p['商品ID'] || ''),
+    escapeCsv(p['商品名'] || ''),
+    escapeCsv(p['SKU'] || ''),
+    escapeCsv(p['カテゴリ'] || ''),
+    escapeCsv(p['仕入れ先'] || ''),
+    escapeCsv(p['標準仕入れ単価'] || ''),
+    escapeCsv(p['登録日'] || ''),
+    escapeCsv(p['メモ'] || ''),
+    escapeCsv(p['画像URL'] || '')
+  ]);
+
+  // ヘッダーとデータを結合
+  const csv = [headers.map(escapeCsv).join(','), ...rows.map(r => r.join(','))].join('\n');
+
+  // ファイル名に日付を追加
+  const date = new Date();
+  const dateStr = date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2);
+  const filename = '商品マスタ_' + dateStr + '.csv';
+
+  // ダウンロード実行
+  downloadCSV(csv, filename);
+}
+
+function handleProductsCSVUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      if (rows.length < 2) {
+        showAlert('csv-upload-alert', 'warning', '⚠️ CSVにデータがありません。');
+        input.value = '';
+        return;
+      }
+
+      // ヘッダー行を確認（最初の行がヘッダー）
+      const headers = rows[0];
+      const idxName = headers.findIndex(h => h === '商品名');
+      const idxSKU = headers.findIndex(h => h === 'SKU');
+      const idxCategory = headers.findIndex(h => h === 'カテゴリ');
+      const idxSupplier = headers.findIndex(h => h === '仕入れ先');
+      const idxCost = headers.findIndex(h => h === '標準仕入れ単価');
+      const idxMemo = headers.findIndex(h => h === 'メモ');
+      const idxImageUrl = headers.findIndex(h => h === '画像URL');
+
+      if (idxSKU === -1) {
+        showAlert('csv-upload-alert', 'danger', '❌ SKU列が見つかりません。CSVフォーマットを確認してください。');
+        input.value = '';
+        return;
+      }
+
+      // 更新対象の商品を集計
+      const updates = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const sku = (row[idxSKU] || '').trim();
+        if (!sku) continue;
+
+        const update = { sku };
+        if (idxName >= 0) update.productName = (row[idxName] || '').trim();
+        if (idxCategory >= 0) update.category = (row[idxCategory] || '').trim();
+        if (idxSupplier >= 0) update.supplier = (row[idxSupplier] || '').trim();
+        if (idxCost >= 0) update.costPrice = (row[idxCost] || '').trim();
+        if (idxMemo >= 0) update.memo = (row[idxMemo] || '').trim();
+        if (idxImageUrl >= 0) update.imageUrl = (row[idxImageUrl] || '').trim();
+        updates.push(update);
+      }
+
+      if (!updates.length) {
+        showAlert('csv-upload-alert', 'warning', '⚠️ 有効なデータがありません。');
+        input.value = '';
+        return;
+      }
+
+      // 確認ダイアログ
+      const msg = `${updates.length}件の商品を更新します。よろしいですか？`;
+      if (!confirm(msg)) {
+        input.value = '';
+        return;
+      }
+
+      // API呼び出し
+      api('updateProductsBulkFromCSV', { updates })
+        .then(res => {
+          showAlert('csv-upload-alert', 'success', `✅ ${updates.length}件の商品を更新しました。`);
+          input.value = '';
+          loadProductsList();
+        })
+        .catch(err => {
+          showAlert('csv-upload-alert', 'danger', '❌ エラー: ' + err.message);
+          input.value = '';
+        });
+
+    } catch (err) {
+      showAlert('csv-upload-alert', 'danger', '❌ CSVの解析に失敗しました: ' + err.message);
+      input.value = '';
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function handleProductCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    const products = rows.map(r => ({
+      name: r[0] || '', sku: r[1] || '', category: r[2] || '',
+      supplier: r[3] || '', costPrice: r[4] || '0', memo: r[5] || ''
+    })).filter(p => p.name);
+
+    if (!products.length) {
+      document.getElementById('product-import-preview').innerHTML = '<div class="alert alert-warning">⚠️ データが見つかりません。列順を確認してください。</div>';
+      return;
+    }
+    _productBulkData = products;
+
+    let html = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>商品名</th><th>SKU</th><th>カテゴリ</th><th>仕入れ先</th><th>標準単価</th><th>メモ</th></tr></thead>
+          <tbody>
+            ${products.map(p => `<tr>
+              <td><strong>${p.name}</strong></td><td>${p.sku||'-'}</td><td>${p.category||'-'}</td>
+              <td>${p.supplier||'-'}</td><td>¥${Number(p.costPrice||0).toLocaleString()}</td><td>${p.memo||'-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; display:flex; align-items:center; gap:16px;">
+        <span style="font-size:13px; color:var(--text-light);">${products.length}件のデータを取込予定</span>
+        <button class="btn btn-primary btn-sm" onclick="submitProductsBulk()">✅ ${products.length}件を一括登録</button>
+      </div>
+    `;
+    document.getElementById('product-import-preview').innerHTML = html;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function handlePurchaseCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const allLines = text.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l);
+    if (allLines.length < 2) {
+      document.getElementById('purchase-import-preview').innerHTML = '<div class="alert alert-warning">⚠️ データが見つかりません。</div>';
+      return;
+    }
+
+    // ヘッダー行を解析して各列のインデックスを動的に取得
+    function parseLine(line) {
+      const cols = []; let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      cols.push(cur.trim());
+      return cols;
+    }
+    const headers = parseLine(allLines[0]).map(h => h.trim());
+    const ci = (keywords, def) => {
+      const idx = headers.findIndex(h => keywords.some(k => h.toUpperCase().includes(k.toUpperCase())));
+      return idx >= 0 ? idx : def;
+    };
+    const idxDate     = ci(['仕入れ日'], 0);
+    const idxName     = ci(['商品名'], 1);
+    const idxSku      = ci(['SKU'], 2);
+    const idxSupplier = ci(['仕入れ先'], 3);
+    const idxCost     = ci(['単価'], 4);
+    const idxQty      = ci(['数量'], 5);
+    const idxShip     = ci(['送料'], 6);
+    const idxMemo     = ci(['備考'], 7);
+
+    const purchases = allLines.slice(1).map(line => {
+      const r = parseLine(line);
+      return {
+        date: r[idxDate] || today(),
+        productName: r[idxName] || '',
+        sku: r[idxSku] || '',
+        supplier: r[idxSupplier] || '',
+        unitCost: r[idxCost] || '0',
+        quantity: r[idxQty] || '1',
+        shipping: r[idxShip] || '0',
+        memo: r[idxMemo] || ''
+      };
+    }).filter(p => p.productName);
+
+    if (!purchases.length) {
+      document.getElementById('purchase-import-preview').innerHTML = '<div class="alert alert-warning">⚠️ データが見つかりません。列順を確認してください。</div>';
+      return;
+    }
+
+    // SKU未入力チェック（警告のみ・SKU入力済み行のみ登録対象）
+    const skuCol = headers[idxSku] ? `「${headers[idxSku]}」列` : `列${idxSku + 1}`;
+    const skuMissing = purchases.map((p, i) => !p.sku ? `行${i + 2}: ${p.productName}` : null).filter(Boolean);
+    const validPurchases = purchases.filter(p => p.sku);
+
+    let warningHtml = '';
+    if (skuMissing.length) {
+      warningHtml = `<div class="alert alert-warning" style="margin-bottom:12px;">⚠️ SKUが未入力のため以下の行はスキップされます（${skuCol}）。<br><small>${skuMissing.join('<br>')}</small></div>`;
+    }
+
+    if (!validPurchases.length) {
+      document.getElementById('purchase-import-preview').innerHTML =
+        warningHtml + '<div class="alert alert-danger">❌ SKUが入力されている行がありません。登録できるデータがありません。</div>';
+      return;
+    }
+
+    _purchaseBulkData = validPurchases;
+
+    let html = warningHtml + `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>仕入れ日</th><th>商品名</th><th>SKU</th><th>仕入れ先</th><th>単価</th><th>数量</th><th>送料</th></tr></thead>
+          <tbody>
+            ${validPurchases.map(p => `<tr>
+              <td>${p.date}</td><td><strong>${p.productName}</strong></td><td>${p.sku||'-'}</td>
+              <td>${p.supplier||'-'}</td><td>¥${Number(p.unitCost||0).toLocaleString()}</td>
+              <td>${p.quantity}個</td><td>¥${Number(p.shipping||0).toLocaleString()}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; display:flex; align-items:center; gap:16px;">
+        <span style="font-size:13px; color:var(--text-light);">${validPurchases.length}件のデータを取込予定${skuMissing.length ? `（${skuMissing.length}件スキップ）` : ''}</span>
+        <button class="btn btn-primary btn-sm" onclick="submitPurchasesBulk()">✅ ${validPurchases.length}件を一括登録</button>
+      </div>
+    `;
+    document.getElementById('purchase-import-preview').innerHTML = html;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function submitProductsBulk() {
+  if (!_productBulkData.length) return;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '登録中...';
+  api('addProductsBulk', _productBulkData)
+    .then(r => {
+      showAlert('product-import-alert', 'success', `✅ ${r.count}件の商品を一括登録しました！`);
+      document.getElementById('product-import-preview').innerHTML = '';
+      document.getElementById('product-csv-input').value = '';
+      _productBulkData = [];
+      loadProducts();
+    })
+    .catch(err => {
+      showAlert('product-import-alert', 'danger', '❌ エラー: ' + err.message);
+      btn.disabled = false; btn.textContent = '✅ 一括登録';
+    });
+}
+
+// =============================================
+// 按分計算CSV取込
+// =============================================
+function handleAbnCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const allLines = e.target.result.split(/\r?\n/).map(l => l.trim());
+
+    function parseLine(line) {
+      const cols = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      cols.push(cur.trim());
+      return cols;
+    }
+
+    // ヘッダー部から仕入れ先を取得
+    let supplier = '';
+    for (let i = 0; i < Math.min(15, allLines.length); i++) {
+      if (allLines[i].startsWith('仕入れ先,')) {
+        supplier = (parseLine(allLines[i])[1] || '').trim();
+        break;
+      }
+    }
+
+    // データ行を抽出（1列目が数字 = 商品行）
+    const products = [];
+    for (const line of allLines) {
+      if (!line) continue;
+      const cols = parseLine(line);
+      if (!/^\d{1,2}$/.test(cols[0])) continue;
+      if (cols.length < 14) continue;
+      const name = (cols[2] || '').trim();
+      const sku = (cols[3] || '').trim();
+      const costPrice = (cols[13] || '0').replace(/,/g, '').replace(/[^0-9]/g, '') || '0';
+      const memo = (cols[14] || '').trim();
+      if (!name) continue;
+      products.push({ name, sku, category: '', supplier, costPrice, memo });
+    }
+
+    if (!products.length) {
+      document.getElementById('abn-import-preview').innerHTML =
+        '<div class="alert alert-warning">⚠️ 商品データが見つかりません。按分計算シートのCSVか確認してください。</div>';
+      return;
+    }
+
+    _productBulkData = products;
+    let html = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>商品名</th><th>SKU</th><th>仕入れ先</th><th>標準仕入単価</th><th>備考</th></tr></thead>
+          <tbody>
+            ${products.map(p => `<tr>
+              <td><strong>${p.name}</strong></td>
+              <td>${p.sku || '-'}</td>
+              <td>${p.supplier || '-'}</td>
+              <td>¥${Number(p.costPrice || 0).toLocaleString()}</td>
+              <td style="font-size:11px; color:var(--text-light);">${p.memo || '-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; display:flex; align-items:center; gap:16px;">
+        <span style="font-size:13px; color:var(--text-light);">${products.length}件の商品を取込予定</span>
+        <button class="btn btn-primary btn-sm" onclick="submitAbnProductsBulk()">✅ ${products.length}件を商品マスタに登録</button>
+      </div>
+    `;
+    document.getElementById('abn-import-preview').innerHTML = html;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function submitAbnProductsBulk() {
+  if (!_productBulkData.length) return;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '登録中...';
+  api('addProductsBulk', _productBulkData)
+    .then(r => {
+      showAlert('abn-import-alert', 'success', `✅ ${r.count}件の商品を一括登録しました！`);
+      document.getElementById('abn-import-preview').innerHTML = '';
+      document.getElementById('abn-csv-input').value = '';
+      _productBulkData = [];
+      loadProducts();
+    })
+    .catch(err => {
+      showAlert('abn-import-alert', 'danger', '❌ エラー: ' + err.message);
+      btn.disabled = false; btn.textContent = '✅ 一括登録';
+    });
+}
+
+function submitPurchasesBulk() {
+  if (!_purchaseBulkData.length) return;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '登録中...';
+  api('addPurchasesBulk', _purchaseBulkData)
+    .then(r => {
+      showAlert('purchase-import-alert', 'success', `✅ ${r.count}件の仕入れを一括登録しました！`);
+      document.getElementById('purchase-import-preview').innerHTML = '';
+      document.getElementById('purchase-csv-input').value = '';
+      _purchaseBulkData = [];
+      loadRecentPurchases();
+      invalidateInventory();
+    })
+    .catch(err => {
+      showAlert('purchase-import-alert', 'danger', '❌ エラー: ' + err.message);
+      btn.disabled = false; btn.textContent = '✅ 一括登録';
+    });
+}
+
+// =============================================
+// ラクマート自動取得
+// =============================================
+async function fetchRakumartLatest() {
+  const btn = document.getElementById('rakumart-fetch-btn');
+  const status = document.getElementById('rakumart-status');
+  btn.disabled = true;
+  btn.textContent = '取得中...';
+  status.textContent = '';
+
+  try {
+    const data = await api('getRakumartLatest', {});
+
+    if (data.error) throw new Error(data.error);
+
+    // 商品マスタと照合してSKUを補完
+    const products = await new Promise((resolve, reject) => {
+      api('getProducts').then(resolve).catch(reject);
+    });
+    const safeProducts = products || [];
+    const masterMap = {};
+    // 画像URLによる照合マップ（クエリパラメータ除去 + ファイル名）
+    const imageUrlMap = {};
+    const imageFileMap = {};
+    safeProducts.forEach(p => {
+      if (p['SKU']) masterMap[p['SKU']] = p;
+      if (p['商品名']) masterMap[p['商品名']] = p;
+      const imgUrl = (p['画像URL'] || '').trim();
+      if (imgUrl && !imgUrl.startsWith('data:')) {
+        const baseUrl = imgUrl.split('?')[0];
+        imageUrlMap[baseUrl] = p;
+        const fileName = baseUrl.split('/').pop();
+        if (fileName) imageFileMap[fileName] = p;
+      }
+    });
+
+    if (!data.items || !data.items.length) throw new Error('商品データが取得できませんでした');
+
+    // ラクマートのデータを按分仕入れ形式に変換（非同期処理で画像ハッシュ照合を対応）
+    _abnPurchaseData = await Promise.all(data.items.map(async item => {
+      const specText = item.spec || '';
+      let matchedProduct = null;
+      let matchMethod = '';
+
+      // ① メモ欄で照合（注文番号 + 品番）
+      safeProducts.forEach(p => {
+        const orderNo = (item.orderNo || '');
+        if (p['メモ'] && p['メモ'].includes(orderNo.split('-')[0]) && p['メモ'].includes(`品番${item.variantNo}`)) {
+          matchedProduct = p;
+          matchMethod = 'memo';
+        }
+      });
+
+      // ② 画像URLで照合（メモ照合で見つからなかった場合）
+      if (!matchedProduct && item.imgOrigUrl) {
+        const baseUrl = item.imgOrigUrl.split('?')[0];
+        if (imageUrlMap[baseUrl]) {
+          matchedProduct = imageUrlMap[baseUrl];
+          matchMethod = 'image';
+        } else {
+          // ファイル名で部分一致
+          const fileName = baseUrl.split('/').pop();
+          if (fileName && imageFileMap[fileName]) {
+            matchedProduct = imageFileMap[fileName];
+            matchMethod = 'image';
+          }
+        }
+      }
+
+      // ③ 画像ハッシュで照合（新機能：過去の同じ画像との比較）
+      if (!matchedProduct && item.imgUrl && item.imgUrl.startsWith('data:')) {
+        try {
+          const hashRes = await api('matchProductByImageHash', {
+            imageData: item.imgUrl
+          });
+          if (hashRes.matched) {
+            matchedProduct = {
+              'SKU': hashRes.sku,
+              '商品名': hashRes.name,
+              '画像URL': hashRes.imageUrl || item.imgUrl
+            };
+            matchMethod = 'imageHash';
+            console.log(`🖼️ 画像ハッシュで照合: ${hashRes.sku} (${hashRes.name})`);
+          }
+        } catch (err) {
+          console.warn('画像ハッシュ照合失敗:', err);
+        }
+      }
+
+      // 商品マスタに画像があればそちらを優先、なければラクマートのものを使用
+      const masterImg = matchedProduct ? (matchedProduct['画像URL'] || '') : '';
+      return {
+        name:          matchedProduct ? matchedProduct['商品名'] : specText,
+        sku:           matchedProduct ? matchedProduct['SKU'] : '',
+        qty:           item.qty,
+        baseUnitCost:  item.unitPriceJpy,
+        supplier:      'ラクマート',
+        memo:          `${item.orderNo} No.${item.no}`,
+        baseSubtotal:  item.unitPriceJpy * item.qty,
+        imageUrl:      masterImg || item.imgUrl || '',
+        imgOrigUrl:    item.imgOrigUrl || '',
+        _matchMethod:  matchMethod,
+        _rakumartNo:   item.no,
+        _orderNo:      item.orderNo,
+        _variantNo:    item.variantNo,
+        _spec:         specText
+      };
+    }));
+
+    // 国際送料を按分の「国内送料」欄に自動セット
+    if (data.intlShipping) {
+      document.getElementById('abn-domestic-ship').value = data.intlShipping;
+    }
+
+    const matched     = _abnPurchaseData.filter(p => p.sku).length;
+    const imgMatched  = _abnPurchaseData.filter(p => p._matchMethod === 'image').length;
+    const hashMatched = _abnPurchaseData.filter(p => p._matchMethod === 'imageHash').length;
+    const unmatched   = _abnPurchaseData.filter(p => !p.sku).length;
+
+    // プレビュー表示
+    const totalBase = _abnPurchaseData.reduce((s, p) => s + p.baseSubtotal, 0);
+    let html = `<div class="alert alert-success" style="margin-top:12px;">
+      ✅ <strong>${data.orderSn}</strong> — ${_abnPurchaseData.length}商品を取得
+      （商品マスタ一致: ${matched}件${imgMatched ? ` <span style="color:#e67e22">うち画像URL照合: ${imgMatched}件</span>` : ''}${hashMatched ? ` <span style="color:#27ae60">うち画像ハッシュ照合: ${hashMatched}件</span>` : ''} / 未一致: ${unmatched}件）
+      ／ 基本仕入れ合計: ¥${totalBase.toLocaleString()}
+    </div>`;
+
+    if (unmatched > 0) {
+      html += `<div class="alert alert-warning">⚠️ 未一致の商品はSKU未入力になります。<br>・メモ欄照合: 商品マスタのメモ欄に注文番号・品番を記入<br>・画像照合: 「📸 商品画像URLを更新」で画像URLを登録すると次回から自動照合できます。<br>・スキップ: 梱包資材など売上と無関係な商品は「スキップ」をチェックして登録から除外できます。</div>`;
+    }
+
+    html += '<div class="table-wrap"><table><thead><tr><th>画像</th><th>No</th><th>スペック</th><th>一致商品名</th><th>SKU</th><th>数量</th><th>基本単価</th><th>小計</th><th style="text-align:center; font-size:11px;">スキップ</th></tr></thead><tbody>';
+    _abnPurchaseData.forEach((p, idx) => {
+      let skuHtml;
+      if (p.sku) {
+        let badge = '';
+        if (p._matchMethod === 'image') {
+          badge = `<span style="font-size:10px;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;margin-left:4px;">🖼️ URL照合</span>`;
+        } else if (p._matchMethod === 'imageHash') {
+          badge = `<span style="font-size:10px;background:#d4edda;color:#27ae60;border-radius:3px;padding:1px 4px;margin-left:4px;">🎯 ハッシュ照合</span>`;
+        } else {
+          badge = `<span style="font-size:10px;background:#e8f4f8;color:#155724;border-radius:3px;padding:1px 4px;margin-left:4px;">📝 メモ</span>`;
+        }
+        skuHtml = `<span style="color:var(--success)">${p.sku}</span>${badge}`;
+      } else {
+        skuHtml = `<input type="text" placeholder="SKU入力" style="width:80px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;" onchange="updateAbnSku(${p._rakumartNo - 1}, this.value)">`;
+      }
+      const imgHtml = p.imageUrl
+        ? `<img src="${p.imageUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<div style="width:48px;height:48px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`;
+      const skipChecked = p.skip ? 'checked' : '';
+      html += `<tr>
+        <td style="text-align:center;">${imgHtml}</td>
+        <td>${p._rakumartNo}</td>
+        <td><input type="text" value="${String(p._spec || '').replace(/"/g,'&quot;')}" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:12px;" onchange="updateAbnSpec(${p._rakumartNo - 1}, this.value)"></td>
+        <td>${p.name !== p._spec ? p.name : '<span style="color:var(--text-light)">未一致</span>'}</td>
+        <td>${skuHtml}</td>
+        <td>${p.qty}個</td>
+        <td>¥${p.baseUnitCost.toLocaleString()}</td>
+        <td>¥${p.baseSubtotal.toLocaleString()}</td>
+        <td style="text-align:center;"><input type="checkbox" ${skipChecked} onchange="toggleAbnSkip(${idx}, this.checked)"></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('abn-purchase-preview').innerHTML = html;
+    document.getElementById('abn-expenses-card').style.display = '';
+    document.getElementById('abn-purchase-date').value = today();
+    calcAbn();
+
+    status.textContent = `✅ ${data.orderSn} 取得完了`;
+  } catch (err) {
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      status.innerHTML = '❌ ラクマートサーバーが応答していません。 <button class="btn btn-sm btn-primary" onclick="startRakumartServerAndRetry()" style="padding:2px 8px;font-size:11px;">🔄 サーバー起動</button>';
+    } else {
+      status.textContent = '❌ ' + err.message;
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🛒 ラクマート仕入れ（自動取得）';
+  }
+}
+
+// 按分仕入れのスキップ機能
+function toggleAbnSkip(idx, isChecked) {
+  if (_abnPurchaseData[idx]) {
+    _abnPurchaseData[idx].skip = isChecked;
+    calcAbn();
+  }
+}
+
+async function startRakumartServerAndRetry() {
+  const status = document.getElementById('rakumart-status');
+  status.innerHTML = '🔄 ラクマートサーバーを起動中...';
+  try {
+    const res = await api('startRakumartServer');
+    if (res.success) {
+      status.textContent = '✅ サーバーが起動しました。もう一度ボタンをクリックしてください。';
+    } else {
+      status.textContent = '❌ ' + (res.message || 'サーバー起動失敗');
+    }
+  } catch (err) {
+    status.textContent = '❌ ' + err.message;
+  }
+}
+
+// 過去の配送依頼書一覧を表示（複数選択対応）
+async function showPastDeliveryList() {
+  // ローディングモーダルを先に表示
+  const loadingModal = document.createElement('div');
+  loadingModal.id = 'delivery-list-modal';
+  loadingModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+  loadingModal.innerHTML = `
+    <div style="background:white;border-radius:8px;padding:32px 40px;text-align:center;min-width:260px;">
+      <div class="spinner" style="margin:0 auto 16px;"></div>
+      <div style="font-size:14px;color:#555;">ラクマートから取得中...</div>
+      <div style="font-size:12px;color:#999;margin-top:6px;">20〜30秒かかる場合があります</div>
+    </div>`;
+  document.body.appendChild(loadingModal);
+
+  try {
+    const data = await api('getRakumartDeliveryList', {}, 120000);
+    loadingModal.remove();
+
+    if (data.error) throw new Error(data.error);
+    if (!data.deliveries || !data.deliveries.length) throw new Error('配送依頼書が見つかりません');
+
+    // モーダルコンテンツを生成（チェックボックス方式）
+    let html = `
+      <div style="max-height:400px; overflow-y:auto;">
+        <div style="font-size:12px; color:var(--text-light); margin-bottom:12px;">
+          過去 ${data.deliveries.length} 件の配送依頼書から選択（複数選択可）：
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+    `;
+
+    data.deliveries.forEach(delivery => {
+      html += `
+        <label style="display:flex; align-items:center; padding:8px 12px; border:1px solid var(--border); background:#f9f9f9; border-radius:4px; cursor:pointer; transition:all 0.2s;"
+          onmouseover="this.style.background='#f0f0f0'"
+          onmouseout="this.style.background='#f9f9f9'">
+          <input type="checkbox" class="delivery-checkbox" value="${delivery.orderSn}" style="margin-right:8px; cursor:pointer;">
+          <span style="font-size:12px; flex:1;">📦 ${delivery.orderSn}</span>
+          <button onclick="event.preventDefault(); fetchRakumartByOrderSn('${delivery.orderSn}')" style="margin-left:8px; padding:4px 8px; font-size:11px; background:#e8f4f8; border:1px solid #b0dce8; border-radius:3px; cursor:pointer; color:#0066cc;" title="この1件を個別取得">個別取得</button>
+        </label>
+      `;
+    });
+
+    html += `</div></div>`;
+
+    // モーダル表示
+    const modal = document.createElement('div');
+    modal.id = 'past-delivery-modal';
+    modal.style.cssText = `
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
+      z-index:10000;
+    `;
+    modal.innerHTML = `
+      <div style="background:white; border-radius:8px; padding:20px; max-width:450px; width:90%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:14px;">📋 過去の配送依頼書</h3>
+          <button onclick="document.getElementById('past-delivery-modal').remove()" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+        ${html}
+        <div style="display:flex; gap:8px; margin-top:16px; border-top:1px solid var(--border); padding-top:12px;">
+          <button onclick="selectAllDeliveries()" style="flex:1; padding:8px; background:#f0f0f0; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:12px;">全選択</button>
+          <button onclick="bulkImportFromDeliveryList()" style="flex:1; padding:8px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">🚀 一括取得</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  } catch (err) {
+    document.getElementById('delivery-list-modal')?.remove();
+    showToast('❌ ' + err.message);
+  }
+}
+
+// チェックボックスから選択配送依頼書を取得
+function selectAllDeliveries() {
+  document.querySelectorAll('.delivery-checkbox').forEach(cb => cb.checked = true);
+}
+
+// 複数の配送依頼書を一括取得して按分仕入れフォームに読み込む
+async function bulkImportFromDeliveryList() {
+  const selectedCheckboxes = Array.from(document.querySelectorAll('.delivery-checkbox:checked'));
+  if (!selectedCheckboxes.length) {
+    showToast('⚠️ 配送依頼書を選択してください');
+    return;
+  }
+
+  const selectedOrderSns = selectedCheckboxes.map(cb => cb.value);
+
+  // ローディングモーダルを表示
+  const loadingModal = document.createElement('div');
+  loadingModal.id = 'bulk-loading-modal';
+  loadingModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10001;';
+  loadingModal.innerHTML = `
+    <div style="background:white;border-radius:8px;padding:32px 40px;text-align:center;min-width:300px;">
+      <div class="spinner" style="margin:0 auto 16px;"></div>
+      <div style="font-size:14px;color:#555;">${selectedOrderSns.length}件の配送依頼書を取得中...</div>
+      <div style="font-size:12px;color:#999;margin-top:6px;">20〜30秒かかる場合があります</div>
+    </div>`;
+  document.body.appendChild(loadingModal);
+
+  // 選択モーダルを閉じる
+  const pastModal = document.getElementById('past-delivery-modal');
+  if (pastModal) {
+    pastModal.remove();
+  }
+
+  try {
+    const btn = document.getElementById('rakumart-fetch-btn');
+    const status = document.getElementById('rakumart-status');
+    btn.disabled = true;
+    btn.textContent = '取得中...';
+    status.textContent = '';
+
+    // 全選択商品データを取得（順序立てて1件ずつ取得）
+    const allItems = [];
+    const errors = [];
+
+    for (const orderSn of selectedOrderSns) {
+      try {
+        console.log(`Fetching ${orderSn}...`);
+        const data = await api('getRakumartLatest', { orderSn }, 120000);
+        console.log(`Result for ${orderSn}:`, data);
+
+        if (data.error) {
+          errors.push(`${orderSn}: ${data.error}`);
+          continue;
+        }
+        if (data.items && data.items.length) {
+          allItems.push({ orderSn, data });
+        }
+      } catch (err) {
+        console.error(`Error fetching ${orderSn}:`, err);
+        errors.push(`${orderSn}: ${err.message}`);
+      }
+      // 各リクエスト間に少し待機
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    if (!allItems.length) {
+      throw new Error('商品データが取得できませんでした');
+    }
+
+    // 商品マスタを取得
+    const products = await new Promise((resolve, reject) => {
+      api('getProducts').then(resolve).catch(reject);
+    });
+    const safeProducts = products || [];
+    const masterMap = {};
+    const imageUrlMap = {};
+    const imageFileMap = {};
+    safeProducts.forEach(p => {
+      if (p['SKU']) masterMap[p['SKU']] = p;
+      if (p['商品名']) masterMap[p['商品名']] = p;
+      const imgUrl = (p['画像URL'] || '').trim();
+      if (imgUrl && !imgUrl.startsWith('data:')) {
+        const baseUrl = imgUrl.split('?')[0];
+        imageUrlMap[baseUrl] = p;
+        const fileName = baseUrl.split('/').pop();
+        if (fileName) imageFileMap[fileName] = p;
+      }
+    });
+
+    // 全配送依頼書の商品を按分仕入れ形式に変換
+    _abnPurchaseData = [];
+    let totalIntlShipping = 0;
+
+    for (const { orderSn, data } of allItems) {
+      const abnItems = await Promise.all(data.items.map(async item => {
+        const specText = item.spec || '';
+        let matchedProduct = null;
+        let matchMethod = '';
+
+        // ① メモ欄で照合
+        safeProducts.forEach(p => {
+          const orderNo = (item.orderNo || '');
+          if (p['メモ'] && p['メモ'].includes(orderNo.split('-')[0]) && p['メモ'].includes(`品番${item.variantNo}`)) {
+            matchedProduct = p;
+            matchMethod = 'memo';
+          }
+        });
+
+        // ② 画像URLで照合
+        if (!matchedProduct && item.imgOrigUrl) {
+          const baseUrl = item.imgOrigUrl.split('?')[0];
+          if (imageUrlMap[baseUrl]) {
+            matchedProduct = imageUrlMap[baseUrl];
+            matchMethod = 'image';
+          } else {
+            const fileName = baseUrl.split('/').pop();
+            if (fileName && imageFileMap[fileName]) {
+              matchedProduct = imageFileMap[fileName];
+              matchMethod = 'image';
+            }
+          }
+        }
+
+        // ③ 画像ハッシュで照合
+        if (!matchedProduct && item.imgUrl && item.imgUrl.startsWith('data:')) {
+          try {
+            const hashRes = await api('matchProductByImageHash', {
+              imageData: item.imgUrl
+            });
+            if (hashRes.matched) {
+              matchedProduct = {
+                'SKU': hashRes.sku,
+                '商品名': hashRes.name,
+                '画像URL': hashRes.imageUrl || item.imgUrl
+              };
+              matchMethod = 'imageHash';
+            }
+          } catch (err) {
+            // ハッシュ照合失敗
+          }
+        }
+
+        const masterImg = matchedProduct ? (matchedProduct['画像URL'] || '') : '';
+        return {
+          name:          matchedProduct ? matchedProduct['商品名'] : specText,
+          sku:           matchedProduct ? matchedProduct['SKU'] : '',
+          qty:           item.qty,
+          baseUnitCost:  item.unitPriceJpy,
+          supplier:      'ラクマート',
+          memo:          `${orderSn} / ${item.orderNo} No.${item.no}`,
+          baseSubtotal:  item.unitPriceJpy * item.qty,
+          imageUrl:      masterImg || item.imgUrl || '',
+          imgOrigUrl:    item.imgOrigUrl || '',
+          _matchMethod:  matchMethod,
+          _rakumartNo:   item.no,
+          _orderNo:      item.orderNo,
+          _variantNo:    item.variantNo,
+          _spec:         specText
+        };
+      }));
+
+      _abnPurchaseData.push(...abnItems);
+      totalIntlShipping += (data.intlShipping || 0);
+    }
+
+    loadingModal.remove();
+
+    if (!_abnPurchaseData.length) {
+      throw new Error('商品データが取得できませんでした');
+    }
+
+    // 国際送料をセット
+    if (totalIntlShipping) {
+      document.getElementById('abn-domestic-ship').value = totalIntlShipping;
+    }
+
+    // プレビュー表示
+    const matched     = _abnPurchaseData.filter(p => p.sku).length;
+    const imgMatched  = _abnPurchaseData.filter(p => p._matchMethod === 'image').length;
+    const hashMatched = _abnPurchaseData.filter(p => p._matchMethod === 'imageHash').length;
+    const unmatched   = _abnPurchaseData.filter(p => !p.sku).length;
+
+    const totalBase = _abnPurchaseData.reduce((s, p) => s + p.baseSubtotal, 0);
+    let html = `<div class="alert alert-success" style="margin-top:12px;">
+      ✅ <strong>${selectedOrderSns.length}件の配送依頼書</strong> — ${_abnPurchaseData.length}商品を取得
+      （商品マスタ一致: ${matched}件${imgMatched ? ` <span style="color:#e67e22">うち画像URL照合: ${imgMatched}件</span>` : ''}${hashMatched ? ` <span style="color:#27ae60">うち画像ハッシュ照合: ${hashMatched}件</span>` : ''} / 未一致: ${unmatched}件）
+      ／ 基本仕入れ合計: ¥${totalBase.toLocaleString()}
+    </div>`;
+
+    if (unmatched > 0) {
+      html += `<div class="alert alert-warning">⚠️ 未一致の商品はSKU未入力になります。<br>・メモ欄照合: 商品マスタのメモ欄に注文番号・品番を記入<br>・画像照合: 「📸 商品画像URLを更新」で画像URLを登録すると次回から自動照合できます。<br>・スキップ: 梱包資材など売上と無関係な商品は「スキップ」をチェックして登録から除外できます。</div>`;
+    }
+
+    if (errors.length) {
+      html += `<div class="alert alert-warning">⚠️ 取得エラー:${errors.map(e => '<br>・' + e).join('')}</div>`;
+    }
+
+    html += '<div class="table-wrap"><table><thead><tr><th>画像</th><th>No</th><th>スペック</th><th>一致商品名</th><th>SKU</th><th>数量</th><th>基本単価</th><th>小計</th><th style="text-align:center; font-size:11px;">スキップ</th></tr></thead><tbody>';
+    _abnPurchaseData.forEach((p, idx) => {
+      let skuHtml;
+      if (p.sku) {
+        let badge = '';
+        if (p._matchMethod === 'image') {
+          badge = `<span style="font-size:10px;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;margin-left:4px;">🖼️ URL照合</span>`;
+        } else if (p._matchMethod === 'imageHash') {
+          badge = `<span style="font-size:10px;background:#d4edda;color:#27ae60;border-radius:3px;padding:1px 4px;margin-left:4px;">🎯 ハッシュ照合</span>`;
+        } else {
+          badge = `<span style="font-size:10px;background:#e8f4f8;color:#155724;border-radius:3px;padding:1px 4px;margin-left:4px;">📝 メモ</span>`;
+        }
+        skuHtml = `<span style="color:var(--success)">${p.sku}</span>${badge}`;
+      } else {
+        skuHtml = `<input type="text" placeholder="SKU入力" style="width:80px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;" onchange="updateAbnSku(${idx}, this.value)">`;
+      }
+      const imgHtml = p.imageUrl
+        ? `<img src="${p.imageUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<div style="width:48px;height:48px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`;
+      const skipChecked = p.skip ? 'checked' : '';
+      html += `<tr>
+        <td style="text-align:center;">${imgHtml}</td>
+        <td>${p._rakumartNo}</td>
+        <td><input type="text" value="${String(p._spec || '').replace(/"/g,'&quot;')}" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:12px;" onchange="updateAbnSpec(${idx}, this.value)"></td>
+        <td>${p.name !== p._spec ? p.name : '<span style="color:var(--text-light)">未一致</span>'}</td>
+        <td>${skuHtml}</td>
+        <td>${p.qty}個</td>
+        <td>¥${p.baseUnitCost.toLocaleString()}</td>
+        <td>¥${p.baseSubtotal.toLocaleString()}</td>
+        <td style="text-align:center;"><input type="checkbox" ${skipChecked} onchange="toggleAbnSkip(${idx}, this.checked)"></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('abn-purchase-preview').innerHTML = html;
+    document.getElementById('abn-expenses-card').style.display = '';
+    document.getElementById('abn-purchase-date').value = today();
+    calcAbn();
+
+    status.textContent = `✅ ${selectedOrderSns.length}件 × ${_abnPurchaseData.length}商品を取得完了`;
+  } catch (err) {
+    loadingModal.remove();
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      const status = document.getElementById('rakumart-status');
+      status.innerHTML = '❌ ラクマートサーバーが応答していません。 <button class="btn btn-sm btn-primary" onclick="startRakumartServerAndRetry()" style="padding:2px 8px;font-size:11px;">🔄 サーバー起動</button>';
+    } else {
+      showToast('❌ ' + err.message);
+    }
+  } finally {
+    const btn = document.getElementById('rakumart-fetch-btn');
+    btn.disabled = false;
+    btn.textContent = '🛒 ラクマート仕入れ（自動取得）';
+  }
+}
+
+// 特定の配送依頼書データを取得（最新と同じ処理）
+async function fetchRakumartByOrderSn(orderSn) {
+  const btn = document.getElementById('rakumart-fetch-btn');
+  const status = document.getElementById('rakumart-status');
+  btn.disabled = true;
+  btn.textContent = '取得中...';
+  status.textContent = '';
+
+  // モーダルを閉じる
+  document.querySelectorAll('div[style*="position:fixed"]').forEach(el => {
+    if (el.style.background === 'rgba(0, 0, 0, 0.5)') el.remove();
+  });
+
+  try {
+    // ラクマートサーバーから特定の配送依頼書を取得
+    const data = await api('getRakumartLatest', { orderSn }, 120000);
+
+    if (data.error) throw new Error(data.error);
+
+    // 以降は fetchRakumartLatest と同じ処理（コードは重複するが分かりやすく）
+    const products = await new Promise((resolve, reject) => {
+      api('getProducts').then(resolve).catch(reject);
+    });
+    const safeProducts = products || [];
+    const masterMap = {};
+    const imageUrlMap = {};
+    const imageFileMap = {};
+    safeProducts.forEach(p => {
+      if (p['SKU']) masterMap[p['SKU']] = p;
+      if (p['商品名']) masterMap[p['商品名']] = p;
+      const imgUrl = (p['画像URL'] || '').trim();
+      if (imgUrl && !imgUrl.startsWith('data:')) {
+        const baseUrl = imgUrl.split('?')[0];
+        imageUrlMap[baseUrl] = p;
+        const fileName = baseUrl.split('/').pop();
+        if (fileName) imageFileMap[fileName] = p;
+      }
+    });
+
+    if (!data.items || !data.items.length) throw new Error('商品データが取得できませんでした');
+
+    // ラクマートのデータを按分仕入れ形式に変換（非同期処理で画像ハッシュ照合を対応）
+    _abnPurchaseData = await Promise.all(data.items.map(async item => {
+      const specText = item.spec || '';
+      let matchedProduct = null;
+      let matchMethod = '';
+
+      // ① メモ欄で照合（注文番号 + 品番）
+      safeProducts.forEach(p => {
+        const orderNo = (item.orderNo || '');
+        if (p['メモ'] && p['メモ'].includes(orderNo.split('-')[0]) && p['メモ'].includes(`品番${item.variantNo}`)) {
+          matchedProduct = p;
+          matchMethod = 'memo';
+        }
+      });
+
+      // ② 画像URLで照合（メモ照合で見つからなかった場合）
+      if (!matchedProduct && item.imgOrigUrl) {
+        const baseUrl = item.imgOrigUrl.split('?')[0];
+        if (imageUrlMap[baseUrl]) {
+          matchedProduct = imageUrlMap[baseUrl];
+          matchMethod = 'image';
+        } else {
+          const fileName = baseUrl.split('/').pop();
+          if (fileName && imageFileMap[fileName]) {
+            matchedProduct = imageFileMap[fileName];
+            matchMethod = 'image';
+          }
+        }
+      }
+
+      // ③ 画像ハッシュで照合（新機能：過去の同じ画像との比較）
+      if (!matchedProduct && item.imgUrl && item.imgUrl.startsWith('data:')) {
+        try {
+          const hashRes = await api('matchProductByImageHash', {
+            imageData: item.imgUrl
+          });
+          if (hashRes.matched) {
+            matchedProduct = {
+              'SKU': hashRes.sku,
+              '商品名': hashRes.name,
+              '画像URL': hashRes.imageUrl || item.imgUrl
+            };
+            matchMethod = 'imageHash';
+            console.log(`🖼️ 画像ハッシュで照合: ${hashRes.sku} (${hashRes.name})`);
+          }
+        } catch (err) {
+          console.warn('画像ハッシュ照合失敗:', err);
+        }
+      }
+
+      const masterImg = matchedProduct ? (matchedProduct['画像URL'] || '') : '';
+      return {
+        name:          matchedProduct ? matchedProduct['商品名'] : specText,
+        sku:           matchedProduct ? matchedProduct['SKU'] : '',
+        qty:           item.qty,
+        baseUnitCost:  item.unitPriceJpy,
+        supplier:      'ラクマート',
+        memo:          `${item.orderNo} No.${item.no}`,
+        baseSubtotal:  item.unitPriceJpy * item.qty,
+        imageUrl:      masterImg || item.imgUrl || '',
+        imgOrigUrl:    item.imgOrigUrl || '',
+        _matchMethod:  matchMethod,
+        _rakumartNo:   item.no,
+        _orderNo:      item.orderNo,
+        _variantNo:    item.variantNo,
+        _spec:         specText
+      };
+    }));
+
+    // 国際送料を按分の「国内送料」欄に自動セット
+    if (data.intlShipping) {
+      document.getElementById('abn-domestic-ship').value = data.intlShipping;
+    }
+
+    const matched     = _abnPurchaseData.filter(p => p.sku).length;
+    const imgMatched  = _abnPurchaseData.filter(p => p._matchMethod === 'image').length;
+    const hashMatched = _abnPurchaseData.filter(p => p._matchMethod === 'imageHash').length;
+    const unmatched   = _abnPurchaseData.filter(p => !p.sku).length;
+
+    // プレビュー表示
+    const totalBase = _abnPurchaseData.reduce((s, p) => s + p.baseSubtotal, 0);
+    let html = `<div class="alert alert-success" style="margin-top:12px;">
+      ✅ <strong>${data.orderSn}</strong> — ${_abnPurchaseData.length}商品を取得
+      （商品マスタ一致: ${matched}件${imgMatched ? ` <span style="color:#e67e22">うち画像URL照合: ${imgMatched}件</span>` : ''}${hashMatched ? ` <span style="color:#27ae60">うち画像ハッシュ照合: ${hashMatched}件</span>` : ''} / 未一致: ${unmatched}件）
+      ／ 基本仕入れ合計: ¥${totalBase.toLocaleString()}
+    </div>`;
+
+    if (unmatched > 0) {
+      html += `<div class="alert alert-warning">⚠️ 未一致の商品はSKU未入力になります。<br>・メモ欄照合: 商品マスタのメモ欄に注文番号・品番を記入<br>・画像照合: 「📸 商品画像URLを更新」で画像URLを登録すると次回から自動照合できます。<br>・スキップ: 梱包資材など売上と無関係な商品は「スキップ」をチェックして登録から除外できます。</div>`;
+    }
+
+    html += '<div class="table-wrap"><table><thead><tr><th>画像</th><th>No</th><th>スペック</th><th>一致商品名</th><th>SKU</th><th>数量</th><th>基本単価</th><th>小計</th><th style="text-align:center; font-size:11px;">スキップ</th></tr></thead><tbody>';
+    _abnPurchaseData.forEach((p, idx) => {
+      let skuHtml;
+      if (p.sku) {
+        let badge = '';
+        if (p._matchMethod === 'image') {
+          badge = `<span style="font-size:10px;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;margin-left:4px;">🖼️ URL照合</span>`;
+        } else if (p._matchMethod === 'imageHash') {
+          badge = `<span style="font-size:10px;background:#d4edda;color:#27ae60;border-radius:3px;padding:1px 4px;margin-left:4px;">🎯 ハッシュ照合</span>`;
+        } else {
+          badge = `<span style="font-size:10px;background:#e8f4f8;color:#155724;border-radius:3px;padding:1px 4px;margin-left:4px;">📝 メモ</span>`;
+        }
+        skuHtml = `<span style="color:var(--success)">${p.sku}</span>${badge}`;
+      } else {
+        skuHtml = `<input type="text" placeholder="SKU入力" style="width:80px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;" onchange="updateAbnSku(${p._rakumartNo - 1}, this.value)">`;
+      }
+      const imgHtml = p.imageUrl
+        ? `<img src="${p.imageUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<div style="width:48px;height:48px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`;
+      const skipChecked = p.skip ? 'checked' : '';
+      html += `<tr>
+        <td style="text-align:center;">${imgHtml}</td>
+        <td>${p._rakumartNo}</td>
+        <td><input type="text" value="${String(p._spec || '').replace(/"/g,'&quot;')}" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:12px;" onchange="updateAbnSpec(${p._rakumartNo - 1}, this.value)"></td>
+        <td>${p.name !== p._spec ? p.name : '<span style="color:var(--text-light)">未一致</span>'}</td>
+        <td>${skuHtml}</td>
+        <td>${p.qty}個</td>
+        <td>¥${p.baseUnitCost.toLocaleString()}</td>
+        <td>¥${p.baseSubtotal.toLocaleString()}</td>
+        <td style="text-align:center;"><input type="checkbox" ${skipChecked} onchange="toggleAbnSkip(${idx}, this.checked)"></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('abn-purchase-preview').innerHTML = html;
+    document.getElementById('abn-expenses-card').style.display = '';
+    document.getElementById('abn-purchase-date').value = today();
+    calcAbn();
+
+    status.textContent = `✅ ${data.orderSn} 取得完了`;
+  } catch (err) {
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      status.innerHTML = '❌ ラクマートサーバーが応答していません。 <button class="btn btn-sm btn-primary" onclick="startRakumartServerAndRetry()" style="padding:2px 8px;font-size:11px;">🔄 サーバー起動</button>';
+    } else {
+      status.textContent = '❌ ' + err.message;
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🛒 ラクマート仕入れ（自動取得）';
+  }
+}
+
+function updateAbnSku(idx, sku) {
+  if (_abnPurchaseData[idx]) {
+    _abnPurchaseData[idx].sku = sku.trim();
+    calcAbn();
+  }
+}
+
+function updateAbnSpec(idx, spec) {
+  if (_abnPurchaseData[idx]) {
+    _abnPurchaseData[idx]._spec = spec.trim();
+    calcAbn();
+  }
+}
+
+function handleAbnPurchaseCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const allLines = e.target.result.split(/\r?\n/).map(l => l.trim());
+    function parseLine(line) {
+      const cols = []; let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      cols.push(cur.trim());
+      return cols;
+    }
+    // 仕入れ先を取得
+    let supplier = 'ラクマート';
+    for (let i = 0; i < Math.min(15, allLines.length); i++) {
+      if (allLines[i].startsWith('仕入れ先,')) {
+        supplier = (parseLine(allLines[i])[1] || '').trim() || supplier;
+        break;
+      }
+    }
+    // データ行抽出（1列目が1〜99の数字）
+    _abnPurchaseData = [];
+    for (const line of allLines) {
+      if (!line) continue;
+      const cols = parseLine(line);
+      if (!/^\d{1,2}$/.test(cols[0])) continue;
+      if (cols.length < 14) continue;
+      const name = (cols[2] || '').trim();
+      const sku  = (cols[3] || '').trim();
+      const qty  = parseInt((cols[4] || '1').replace(/,/g, '')) || 1;
+      const baseUnitCost = parseFloat((cols[13] || '0').replace(/,/g, '').replace(/[^0-9.]/g, '')) || 0;
+      const memo = (cols[14] || '').trim();
+      if (!name) continue;
+      _abnPurchaseData.push({ name, sku, qty, baseUnitCost, supplier, memo,
+        baseSubtotal: baseUnitCost * qty });
+    }
+    if (!_abnPurchaseData.length) {
+      document.getElementById('abn-purchase-preview').innerHTML =
+        '<div class="alert alert-danger">❌ 商品データが読み取れませんでした。ファイル形式を確認してください。</div>';
+      return;
+    }
+    const totalBase = _abnPurchaseData.reduce((s, p) => s + p.baseSubtotal, 0);
+    let html = `<div class="alert alert-success" style="margin-top:12px;">✅ ${_abnPurchaseData.length}商品を読み込みました（基本仕入れ合計: ¥${totalBase.toLocaleString()}）</div>`;
+    html += '<div class="table-wrap"><table><thead><tr><th>NO</th><th>商品名</th><th>SKU</th><th>数量</th><th>基本単価(調整後)</th><th>小計</th></tr></thead><tbody>';
+    _abnPurchaseData.forEach((p, i) => {
+      html += `<tr>
+        <td>${i+1}</td><td>${p.name}</td><td>${p.sku || '<span style="color:var(--danger)">未入力</span>'}</td>
+        <td>${p.qty}個</td><td>¥${p.baseUnitCost.toLocaleString()}</td><td>¥${p.baseSubtotal.toLocaleString()}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('abn-purchase-preview').innerHTML = html;
+    document.getElementById('abn-expenses-card').style.display = '';
+    document.getElementById('abn-purchase-date').value = today();
+    calcAbn();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function calcAbn() {
+  if (!_abnPurchaseData.length) return;
+  const customs   = parseFloat(document.getElementById('abn-customs').value) || 0;
+  const tax       = parseFloat(document.getElementById('abn-tax').value) || 0;
+  const domShip   = parseFloat(document.getElementById('abn-domestic-ship').value) || 0;
+  const other     = parseFloat(document.getElementById('abn-other').value) || 0;
+  const totalAdditional = customs + tax + domShip + other;
+  const method    = document.querySelector('input[name="abn-method"]:checked').value;
+  const totalBase = _abnPurchaseData.reduce((s, p) => s + p.baseSubtotal, 0);
+  const totalQty  = _abnPurchaseData.reduce((s, p) => s + p.qty, 0);
+
+  _abnPurchaseData.forEach(p => {
+    const ratio = method === 'amount'
+      ? (totalBase > 0 ? p.baseSubtotal / totalBase : 1 / _abnPurchaseData.length)
+      : (totalQty  > 0 ? p.qty          / totalQty  : 1 / _abnPurchaseData.length);
+    p.apportioned      = Math.round(totalAdditional * ratio);
+    p.apportionedPerUnit = Math.round(p.apportioned / p.qty);
+    p.finalUnitCost    = p.baseUnitCost + p.apportionedPerUnit;
+    p.finalSubtotal    = p.finalUnitCost * p.qty;
+  });
+
+  const totalFinal = _abnPurchaseData.reduce((s, p) => s + p.finalSubtotal, 0);
+  document.getElementById('abn-total-summary').innerHTML =
+    `基本仕入れ合計: <strong>¥${totalBase.toLocaleString()}</strong> ＋ 追加費用合計: <strong>¥${totalAdditional.toLocaleString()}</strong>
+     （関税¥${customs.toLocaleString()} ＋ 消費税¥${tax.toLocaleString()} ＋ 送料¥${domShip.toLocaleString()} ＋ その他¥${other.toLocaleString()}）
+     ＝ 最終仕入れ合計: <strong style="color:var(--primary)">¥${totalFinal.toLocaleString()}</strong>`;
+
+  document.getElementById('abn-result-card').style.display = '';
+  let html = '<div class="table-wrap"><table><thead><tr><th>画像</th><th>商品名</th><th>SKU</th><th>数量</th><th>基本単価</th><th>按分額/個</th><th>最終仕入単価</th><th>合計</th></tr></thead><tbody>';
+  _abnPurchaseData.forEach(p => {
+    const imgHtml = p.imageUrl
+      ? `<img src="${p.imageUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`
+      : `<span style="font-size:20px;">📦</span>`;
+    html += `<tr>
+      <td style="text-align:center;">${imgHtml}</td>
+      <td>${p.name}</td><td>${p.sku || '-'}</td><td>${p.qty}個</td>
+      <td>¥${p.baseUnitCost.toLocaleString()}</td>
+      <td class="num-positive">+¥${p.apportionedPerUnit.toLocaleString()}</td>
+      <td><strong>¥${p.finalUnitCost.toLocaleString()}</strong></td>
+      <td>¥${p.finalSubtotal.toLocaleString()}</td>
+    </tr>`;
+  });
+  html += `</tbody><tfoot><tr><td colspan="5"><strong>合計</strong></td><td></td><td><strong>¥${totalFinal.toLocaleString()}</strong></td></tr></tfoot></table></div>`;
+  document.getElementById('abn-result-table').innerHTML = html;
+}
+
+function updateAbnImages() {
+  if (!_abnPurchaseData.length) return;
+  const btn = document.getElementById('abn-imgupdate-btn');
+  const imageMap = {};
+  _abnPurchaseData.forEach(p => {
+    const sku = (p.sku || '').trim();
+    const imgUrl = p.imgOrigUrl || '';
+    if (sku && imgUrl) imageMap[sku] = imgUrl;
+  });
+  if (!Object.keys(imageMap).length) {
+    showToast('SKUが設定されている商品の画像URLが見つかりません。SKUを入力してから再試行してください。', 'warning');
+    return;
+  }
+  btn.disabled = true; btn.textContent = '更新中...';
+  api('updateProductImages', imageMap)
+    .then(() => {
+      btn.disabled = false; btn.textContent = '📸 商品画像URLを更新';
+      const alertEl = document.getElementById('abn-result-alert');
+      alertEl.innerHTML = `<div class="alert alert-success">✅ ${Object.keys(imageMap).length}件の商品画像URLを更新しました！在庫一覧に反映されます。</div>`;
+    })
+    .catch(err => {
+      btn.disabled = false; btn.textContent = '📸 商品画像URLを更新';
+      const alertEl = document.getElementById('abn-result-alert');
+      alertEl.innerHTML = `<div class="alert alert-danger">❌ エラー: ${err.message}</div>`;
+    });
+}
+
+function submitAbnPurchases() {
+  if (!_abnPurchaseData.length) return;
+  const purchaseDate = document.getElementById('abn-purchase-date').value;
+  if (!purchaseDate) { showToast('仕入れ日を入力してください', 'warning'); return; }
+
+  // スキップされていない商品のみを抽出
+  const notSkipped = _abnPurchaseData.filter(p => !p.skip);
+  const skipped = _abnPurchaseData.filter(p => p.skip);
+
+  // SKU入力済み件数を事前確認
+  const skuFilled = notSkipped.filter(p => (p.sku || '').trim()).length;
+  if (!skuFilled && notSkipped.length > 0) {
+    const alertEl = document.getElementById('abn-result-alert');
+    alertEl.innerHTML = '<div class="alert alert-warning">⚠️ SKUが入力されている商品がありません。<br>上の表でSKUを入力するか、「📸 商品画像URLを更新」で画像照合してから再試行してください。</div>';
+    return;
+  }
+
+  if (notSkipped.length === 0) {
+    const alertEl = document.getElementById('abn-result-alert');
+    alertEl.innerHTML = '<div class="alert alert-warning">⚠️ スキップされていない商品がありません。</div>';
+    return;
+  }
+
+  const rows = notSkipped.map(p => ({
+    date: purchaseDate,
+    productName: p.name,
+    sku: p.sku,
+    supplier: p.supplier || '',
+    unitCost: p.finalUnitCost,
+    quantity: p.qty,
+    shipping: 0,
+    memo: p.memo || '',
+    // imgOrigUrl（元のCDN URL）を優先、なければimageUrlでdata:以外を使用
+    imageUrl: p.imgOrigUrl || ((p.imageUrl && !p.imageUrl.startsWith('data:')) ? p.imageUrl : '')
+  }));
+
+  const btn = document.getElementById('abn-submit-btn');
+  btn.disabled = true; btn.textContent = '登録中...';
+  api('addPurchasesBulk', rows)
+    .then(r => {
+      // 完了メッセージを改善
+      const totalCount = _abnPurchaseData.length;
+      const registeredCount = r.count;
+      const skippedCount = skipped.length;
+
+      let msg = `✅ <strong>${totalCount}件中${registeredCount}件を登録しました</strong>`;
+      if (skippedCount > 0) {
+        msg += `<br>（スキップ: ${skippedCount}件）`;
+      }
+      if (r.autoAdded) {
+        msg += `<br>（商品マスタへ${r.autoAdded}件を自動登録）`;
+      }
+
+      const alertEl = document.getElementById('abn-result-alert');
+      alertEl.innerHTML = `<div class="alert alert-success">${msg}</div>`;
+      // 自動消去はしない（ユーザーが確認できるよう残す）
+      setTimeout(() => {}, 6000);
+
+      btn.disabled = false; btn.textContent = '📥 一括仕入れ登録する';
+      invalidateInventory();
+      _abnPurchaseData = [];
+      document.getElementById('abn-purchase-preview').innerHTML = '';
+      document.getElementById('abn-purchase-csv-input').value = '';
+      document.getElementById('abn-expenses-card').style.display = 'none';
+      document.getElementById('abn-result-card').style.display = 'none';
+      document.getElementById('abn-result-table').innerHTML = '';
+    })
+    .catch(err => {
+      const alertEl = document.getElementById('abn-result-alert');
+      alertEl.innerHTML = `<div class="alert alert-danger">❌ エラー: ${err.message}</div>`;
+      // エラーは自動消去しない（ユーザーが確認できるよう残す）
+      btn.disabled = false; btn.textContent = '📥 一括仕入れ登録する';
+    });
+}
+
+// =============================================
+// ユーティリティ
+// =============================================
+function showAlert(containerId, type, msg, autoDismissMs = 5000) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  if (autoDismissMs > 0) setTimeout(() => { if (el) el.innerHTML = ''; }, autoDismissMs);
+}
+
+function showOfflineBanner(msg) {
+  const banner = document.getElementById('offline-banner');
+  const msgEl  = document.getElementById('offline-banner-msg');
+  if (!banner || !msgEl) return;
+  msgEl.textContent = msg;
+  banner.style.display = 'block';
+  document.body.style.paddingTop = (banner.offsetHeight + 4) + 'px';
+}
+
+function hideOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  banner.style.display = 'none';
+  document.body.style.paddingTop = '';
+}
+
+// スナックバー（コンテナIDなしでどこでも使えるトースト通知）
+let _toastTimer = null;
+function showToast(msg, type = 'danger') {
+  let toast = document.getElementById('global-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'global-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9998;max-width:340px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+  }
+  const colors = {danger:'#dc3545', success:'#34a853', warning:'#fbbc04', info:'#4a86e8'};
+  const textColors = {warning:'#333'};
+  toast.style.background  = colors[type] || colors.danger;
+  toast.style.color       = textColors[type] || '#fff';
+  toast.style.opacity     = '1';
+  toast.textContent       = msg;
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+}
+
+function showImageModal(imageSrc, productName) {
+  const modal = document.getElementById('image-modal');
+  const img = document.getElementById('modal-img');
+  const title = document.getElementById('modal-title');
+  img.src = imageSrc;
+  title.textContent = productName || '画像';
+  modal.classList.add('active');
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('image-modal');
+  modal.classList.remove('active');
+}
+
+// =============================================
+// 在庫編集機能
+// =============================================
+function attachStockInputListeners() {
+  document.querySelectorAll('.stock-input').forEach(input => {
+    input.addEventListener('change', saveStockChange);
+    input.addEventListener('blur', saveStockChange);
+  });
+}
+
+function saveStockChange(e) {
+  const input = e.target;
+  const sku = input.dataset.sku;
+  const newStock = parseInt(input.value);
+
+  if (isNaN(newStock) || newStock < 0) {
+    input.style.borderColor = 'red';
+    showAlert('inventory-alert', 'danger', '❌ 無効な値: 0以上の整数を入力してください');
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    return;
+  }
+
+  input.classList.add('saving');
+  input.disabled = true;
+
+  api('updateInventoryDirect', {sku: sku, newStock: newStock})
+    .then(() => {
+      input.classList.remove('saving');
+      input.classList.add('success');
+      showAlert('inventory-alert', 'success', '✅ 在庫を更新しました');
+      setTimeout(() => {
+        input.classList.remove('success');
+      }, 500);
+      input.disabled = false;
+    })
+    .catch(err => {
+      input.classList.remove('saving');
+      input.disabled = false;
+      input.style.borderColor = 'red';
+      showAlert('inventory-alert', 'danger', '❌ 更新失敗: ' + err.message);
+      setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('image-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeImageModal();
+    });
+  }
+});
+
+// =============================================
+// 設定タブ機能
+// =============================================
+async function loadSettings() {
+  try {
+    const config = await api('getConfig');
+    document.getElementById('settings-low-stock-threshold').value = config.lowStockThreshold || 5;
+    document.getElementById('settings-default-fee-rate').value = config.defaultFeeRate || '0';
+    document.getElementById('settings-default-calculation').value = config.defaultCalculation || 'standard';
+
+    // ラクマート認証情報を読み込む
+    if (config.rakumartUsername) {
+      document.getElementById('settings-rakumart-username').value = config.rakumartUsername;
+      const alertEl = document.getElementById('rakumart-save-alert');
+      if (alertEl) {
+        alertEl.innerHTML = '<div style="background:#d4edda; color:#155724; padding:8px 12px; border-radius:6px; border-left:4px solid #28a745; font-size:13px;">✅ ラクマート認証情報が保存されています（自動ログイン有効）</div>';
+      }
+    }
+
+    checkRakumartStatusForSettings();
+  } catch (err) {
+    showAlert('settings-alert', 'danger', '❌ 設定の読み込みに失敗しました: ' + err.message);
+  }
+}
+
+async function saveSettings() {
+  try {
+    const config = {
+      lowStockThreshold: parseInt(document.getElementById('settings-low-stock-threshold').value) || 5,
+      defaultFeeRate: parseFloat(document.getElementById('settings-default-fee-rate').value) || 0,
+      defaultCalculation: document.getElementById('settings-default-calculation').value || 'standard'
+    };
+
+    await api('saveConfig', config);
+    showToast('✅ 設定を保存しました');
+
+    // 在庫タブを再ロード（閾値が変わったため）
+    tabLoaded['inventory'] = false;
+  } catch (err) {
+    showToast('❌ 設定の保存に失敗しました: ' + err.message);
+  }
+}
+
+async function saveRakumartCredentials() {
+  try {
+    const username = document.getElementById('settings-rakumart-username').value.trim();
+    const password = document.getElementById('settings-rakumart-password').value;
+
+    if (!username || !password) {
+      showToast('❌ ユーザーIDとパスワードの両方を入力してください');
+      return;
+    }
+
+    const config = {
+      rakumartUsername: username,
+      rakumartPassword: password
+    };
+
+    await api('saveConfig', config);
+    showToast('✅ ラクマート設定を保存しました。次回から自動ログインされます。');
+
+    // フィールドをクリア（表示用）
+    document.getElementById('settings-rakumart-password').value = '';
+  } catch (err) {
+    showToast('❌ ラクマート設定の保存に失敗しました: ' + err.message);
+  }
+}
+
+async function clearRakumartCredentials() {
+  try {
+    if (!confirm('ラクマートのユーザーIDとパスワードをクリアしますか？')) {
+      return;
+    }
+
+    const config = {
+      rakumartUsername: null,
+      rakumartPassword: null
+    };
+
+    await api('saveConfig', config);
+    document.getElementById('settings-rakumart-username').value = '';
+    document.getElementById('settings-rakumart-password').value = '';
+    showToast('✅ ラクマート設定をクリアしました。次回からは手動ログインが必要です。');
+  } catch (err) {
+    showToast('❌ クリアに失敗しました: ' + err.message);
+  }
+}
+
+async function checkRakumartStatusForSettings() {
+  try {
+    const status = await api('checkRakumartServer');
+    const statusEl = document.getElementById('settings-rakumart-status');
+    if (statusEl) {
+      if (status.online) {
+        statusEl.innerHTML = '<span style="color:#27ae60;">✅ ラクマートサーバー：接続中</span>';
+      } else {
+        statusEl.innerHTML = '<span style="color:#e74c3c;">❌ ラクマートサーバー：未接続</span><br><small>ターミナルで python3 rakumart_server.py を実行してください</small>';
+      }
+    }
+  } catch (err) {
+    const statusEl = document.getElementById('settings-rakumart-status');
+    if (statusEl) {
+      statusEl.innerHTML = '<span style="color:#e74c3c;">❌ ラクマートサーバー：未接続</span>';
+    }
+  }
+}
+
+function downloadAllData() {
+  api('getPurchases').then(purchases => {
+    api('getSales').then(sales => {
+      api('getProducts').then(products => {
+        api('getInventory').then(inventory => {
+          const backup = {
+            exportDate: new Date().toISOString(),
+            purchases,
+            sales,
+            products,
+            inventory
+          };
+
+          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `ec-backup-${new Date().getTime()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+
+          showToast('✅ バックアップをダウンロードしました');
+        });
+      });
+    });
+  }).catch(err => {
+    showToast('❌ バックアップ生成に失敗: ' + err.message);
+  });
+}
+
+function restoreFromBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+
+      // バックアップの妥当性チェック
+      if (!backup.purchases || !backup.sales || !backup.products || !backup.inventory) {
+        throw new Error('無効なバックアップファイルです');
+      }
+
+      // 確認ダイアログ
+      if (!confirm('このバックアップから復元します。現在のデータは上書きされます。\n復元してよろしいですか？')) {
+        return;
+      }
+
+      // データを復元（簡易版：サーバー側で JSON ファイル直接上書き）
+      showAlert('backup-alert', 'info', '⏳ 復元中...');
+
+      // 実装注：実際にはサーバー側に /api/restoreFromBackup エンドポイントを作成するか、
+      // 各データをループして api('addPurchase', ...) などで復元する必要があります
+      showAlert('backup-alert', 'warning', '⚠️ バックアップ復元機能は今後実装予定です');
+
+    } catch (err) {
+      showAlert('backup-alert', 'danger', '❌ バックアップ復元エラー: ' + err.message);
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+
+<!-- 画像モーダル -->
+<div id="image-modal" class="image-modal">
+  <div class="image-modal-content">
+    <button class="image-modal-close" onclick="closeImageModal()">✕</button>
+    <img id="modal-img" class="image-modal-img" src="" alt="画像">
+    <div id="modal-title" class="image-modal-title"></div>
+  </div>
+</div>
+
+</body>
+</html>
