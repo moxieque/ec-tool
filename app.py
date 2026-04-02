@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EC販売管理ツール - Flask ローカルサーバー
+Zaikore - Flask ローカルサーバー
 起動: python3 app.py
 アクセス: http://localhost:5000
 """
@@ -1402,7 +1402,7 @@ if __name__ == '__main__':
         if not f.exists():
             save_json(f, [])
     print('=' * 50)
-    print('🚀 EC販売管理ツール起動中...')
+    print('🚀 Zaikore起動中...')
     print('📍 http://localhost:8080 でアクセスできます')
     print('🔄 ラクマートサーバーを起動しています...')
     start_rakumart_server()

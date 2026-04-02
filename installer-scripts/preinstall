@@ -1,0 +1,11 @@
+#!/bin/bash
+# Zaikore PKG preinstall script
+# インストール前に既存プロセスを停止
+
+# 既に Zaikore が起動中なら停止
+pkill -f "Zaikore" 2>/dev/null || true
+
+# ポート8080を使用中のプロセスを停止
+lsof -ti:8080 | xargs kill 2>/dev/null || true
+
+exit 0

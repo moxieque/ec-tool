@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EC販売管理ツール</title>
+<title>Zaikore</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -514,7 +514,7 @@ function api(endpoint, body, timeoutMs = 15000) {
 </div>
 
 <div class="header">
-  <h1>📦 EC販売管理ツール</h1>
+  <h1>📦 Zaikore</h1>
   <span class="badge" id="currentMonth"></span>
 </div>
 
@@ -1105,7 +1105,7 @@ function api(endpoint, body, timeoutMs = 15000) {
       <div class="card">
         <div class="card-title">ℹ️ 情報</div>
         <div style="font-size:12px; line-height:1.8; color:var(--text-light);">
-          <p><strong>EC販売管理ツール</strong></p>
+          <p><strong>Zaikore</strong></p>
           <p>このツールは中国輸入ビジネスの仕入れ・販売・在庫管理を一元化するツールです。</p>
 
           <p style="margin-top:16px;"><strong>主な機能：</strong></p>
@@ -3981,7 +3981,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // =============================================
 function applyTheme(themeName) {
   document.documentElement.setAttribute('data-theme', themeName);
-  localStorage.setItem('ec-tool-theme', themeName);
+  localStorage.setItem('zaikore-theme', themeName);
 
   // ラジオボタンを更新
   document.querySelectorAll('input[name="theme"]').forEach(radio => {
@@ -4003,7 +4003,7 @@ function getThemeLabel(themeName) {
 }
 
 function loadSavedTheme() {
-  const savedTheme = localStorage.getItem('ec-tool-theme') || 'default';
+  const savedTheme = localStorage.getItem('zaikore-theme') || 'default';
   applyTheme(savedTheme);
 }
 
@@ -4018,7 +4018,7 @@ async function loadSettings() {
     document.getElementById('settings-default-calculation').value = config.defaultCalculation || 'standard';
 
     // テーマ選択を反映
-    const savedTheme = localStorage.getItem('ec-tool-theme') || 'default';
+    const savedTheme = localStorage.getItem('zaikore-theme') || 'default';
     document.querySelectorAll('input[name="theme"]').forEach(radio => {
       radio.checked = radio.value === savedTheme;
     });

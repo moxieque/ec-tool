@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EC販売管理ツール - ローカルCSVバックアップスクリプト
+Zaikore - ローカルCSVバックアップスクリプト
 使用方法:
   python3 backup.py              # 今すぐバックアップ
   python3 backup.py --list       # バックアップ一覧

@@ -1,5 +1,5 @@
 #!/bin/bash
-# EC販売管理ツール - cron バックアップ設定スクリプト
+# Zaikore - cron バックアップ設定スクリプト
 # 使用方法: bash setup_cron.sh [--remove]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -7,7 +7,7 @@ BACKUP_SCRIPT="$SCRIPT_DIR/backup.py"
 LOG_FILE="$SCRIPT_DIR/backups/backup.log"
 PYTHON="$(which python3)"
 
-CRON_COMMENT="# ec-tool-backup"
+CRON_COMMENT="# zaikore-backup"
 # 毎日 02:00 に実行
 CRON_LINE="0 2 * * * $PYTHON $BACKUP_SCRIPT >> $LOG_FILE 2>&1 $CRON_COMMENT"
 

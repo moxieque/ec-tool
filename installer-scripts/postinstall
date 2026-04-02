@@ -1,0 +1,81 @@
+#!/bin/bash
+# Zaikore PKG postinstall script
+# インストール後の自動セットアップ
+
+APP_PATH="/Applications/Zaikore.app"
+
+# Gatekeeper quarantine 属性を除去（警告回避）
+xattr -rd com.apple.quarantine "$APP_PATH" 2>/dev/null || true
+
+# 実行権限を付与
+chmod -R 755 "$APP_PATH" 2>/dev/null || true
+
+# アンインストーラーを /Applications に配置
+cat > "/Applications/Zaikore アンインストール.command" << 'UNINSTALL_EOF'
+#!/bin/bash
+# Zaikore アンインストーラー
+# ダブルクリックで実行できます
+
+echo ""
+echo "========================================="
+echo "  Zaikore アンインストーラー"
+echo "========================================="
+echo ""
+
+# 確認
+echo "Zaikore をアンインストールしますか？"
+echo "（ユーザーデータは保持されます）"
+echo ""
+read -p "続行するには y を入力してください: " confirm
+
+if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+    echo ""
+    echo "アンインストールを中止しました。"
+    echo ""
+    read -p "Enter キーで閉じます..."
+    exit 0
+fi
+
+echo ""
+echo "アンインストール中..."
+
+# Zaikore プロセスを停止
+pkill -f "Zaikore" 2>/dev/null || true
+lsof -ti:8080 | xargs kill 2>/dev/null || true
+sleep 1
+
+# アプリケーション本体を削除
+if [ -d "/Applications/Zaikore.app" ]; then
+    rm -rf "/Applications/Zaikore.app"
+    echo "  [OK] Zaikore.app を削除しました"
+else
+    echo "  [--] Zaikore.app は見つかりませんでした"
+fi
+
+# PKG レシート（インストール記録）を削除
+if pkgutil --pkgs 2>/dev/null | grep -q "com.moxieque.zaikore"; then
+    sudo pkgutil --forget "com.moxieque.zaikore" 2>/dev/null
+    echo "  [OK] インストール記録を削除しました"
+fi
+
+# このアンインストーラー自身を削除
+SELF_PATH="/Applications/Zaikore アンインストール.command"
+if [ -f "$SELF_PATH" ]; then
+    rm -f "$SELF_PATH"
+    echo "  [OK] アンインストーラーを削除しました"
+fi
+
+echo ""
+echo "========================================="
+echo "  アンインストール完了"
+echo "========================================="
+echo ""
+echo "※ ユーザーデータ（商品・仕入れ・販売データ）は"
+echo "  削除されていません。"
+echo ""
+read -p "Enter キーで閉じます..."
+UNINSTALL_EOF
+
+chmod 755 "/Applications/Zaikore アンインストール.command"
+
+exit 0

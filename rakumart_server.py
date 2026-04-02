@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ラクマート自動仕入れサーバー
-EC販売管理ツールの「ラクマート仕入れ」ボタンから呼び出される
+Zaikoreの「ラクマート仕入れ」ボタンから呼び出される
 
 使い方:
   python3 rakumart_server.py

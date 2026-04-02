@@ -30,7 +30,7 @@ jobs:
         run: |
           pyinstaller --onefile `
             --windowed `
-            --name "ec-tool" `
+            --name "Zaikore" `
             --add-data "static;static" `
             --add-data "data;data" `
             --add-data "manual;manual" `
@@ -41,8 +41,8 @@ jobs:
       - name: Upload Windows EXE
         uses: actions/upload-artifact@v4
         with:
-          name: ec-tool-windows
-          path: dist/ec-tool.exe
+          name: Zaikore-windows
+          path: dist/Zaikore.exe
 
   build-macos:
     runs-on: macos-latest
@@ -63,7 +63,7 @@ jobs:
       - name: Build APP (macOS)
         run: |
           pyinstaller --windowed \
-            --name "ec-tool" \
+            --name "Zaikore" \
             --add-data "static:static" \
             --add-data "data:data" \
             --add-data "manual:manual" \
@@ -74,14 +74,35 @@ jobs:
       - name: Create DMG (macOS)
         run: |
           mkdir -p dist/dmg
-          cp -r dist/ec-tool.app dist/dmg/
-          hdiutil create -volname "ec-tool" -srcfolder dist/dmg -ov -format UDZO dist/ec-tool.dmg
+          cp -r dist/Zaikore.app dist/dmg/
+          hdiutil create -volname "Zaikore" -srcfolder dist/dmg -ov -format UDZO dist/Zaikore.dmg
+
+      - name: Create PKG Installer (macOS)
+        run: |
+          # installer-scripts に実行権限を付与
+          chmod 755 installer-scripts/preinstall
+          chmod 755 installer-scripts/postinstall
+
+          # PKG を生成（/Applications に自動インストール）
+          pkgbuild \
+            --root dist/Zaikore.app \
+            --install-location /Applications/Zaikore.app \
+            --scripts installer-scripts \
+            --identifier com.moxieque.zaikore \
+            --version "${{ github.ref_name }}" \
+            dist/Zaikore-installer.pkg
 
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v4
         with:
-          name: ec-tool-macos
-          path: dist/ec-tool.dmg
+          name: Zaikore-macos
+          path: dist/Zaikore.dmg
+
+      - name: Upload macOS PKG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zaikore-macos-pkg
+          path: dist/Zaikore-installer.pkg
 
   create-release:
     needs: [build-windows, build-macos]
@@ -93,19 +114,25 @@ jobs:
       - name: Download Windows EXE
         uses: actions/download-artifact@v4
         with:
-          name: ec-tool-windows
+          name: Zaikore-windows
           path: artifacts/
 
       - name: Download macOS DMG
         uses: actions/download-artifact@v4
         with:
-          name: ec-tool-macos
+          name: Zaikore-macos
+          path: artifacts/
+
+      - name: Download macOS PKG
+        uses: actions/download-artifact@v4
+        with:
+          name: Zaikore-macos-pkg
           path: artifacts/
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "artifacts/ec-tool.exe,artifacts/ec-tool.dmg"
+          artifacts: "artifacts/Zaikore.exe,artifacts/Zaikore.dmg,artifacts/Zaikore-installer.pkg"
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}

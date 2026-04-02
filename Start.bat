@@ -113,8 +113,8 @@ if not exist "app.py" (
     echo [ERROR] File app.py is missing
     echo.
     echo Please make sure:
-    echo 1. ec-tool-windows.zip was completely extracted
-    echo 2. You are in the correct ec-tool folder
+    echo 1. Zaikore-windows.zip was completely extracted
+    echo 2. You are in the correct Zaikore folder
     echo 3. app.py file exists in this folder
     echo.
   ) >> "!LOGFILE!"
@@ -128,8 +128,8 @@ if not exist "app.py" (
   echo Current location: !CD!
   echo.
   echo Please make sure:
-    echo   1. ec-tool-windows.zip is completely extracted
-  echo   2. You are running Start.bat from the ec-tool folder
+    echo   1. Zaikore-windows.zip is completely extracted
+  echo   2. You are running Start.bat from the Zaikore folder
   echo   3. Check that app.py exists in this folder
   echo.
   pause
